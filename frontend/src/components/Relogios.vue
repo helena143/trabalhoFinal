@@ -12,7 +12,7 @@
       <button>TODOS</button>
       <button>FEMININO</button>
       <button>MASCULINO</button>
-      <button>LUXO</button>
+      <button>LUXO da helena</button>
     </section>
 
     <!-- PRODUTOS -->
