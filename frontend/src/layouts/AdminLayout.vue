@@ -314,7 +314,7 @@
 
 /* ── Topbar ────────────────────────────────────── */
 .topbar {
-  background: #fff;
+  background: #e71111;
   border-bottom: 0.5px solid #e2ddd7;
   padding: 0 28px;
   height: 56px;

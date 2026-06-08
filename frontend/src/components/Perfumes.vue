@@ -281,9 +281,7 @@
                   </svg>
                   Adicionar à Sacola
                 </button>
-                <button class="btn-comprar" @click="handleAddToCart">
-                  Comprar Agora
-                </button>
+                <button class="btn-comprar" @click="handleComprarAgora">Comprar Agora</button>
               </div>
 
               <p class="modal-seguro">🔒 Compra segura · Troca grátis em 30 dias</p>
@@ -334,10 +332,10 @@ const getImg = (name: string) =>
   `http://localhost:3000/public/products/${name}`
 
 const perfumes: IPerfume[] = [
-  { id: 'perf-1',  mongoId: '6a207cc96e1e4fdb36db6e98',  nome: 'IVY Elegance',  preco: 199.90, familia: 'Floral',   genero: 'Feminino',  imagem: getImg('perfume.png'),   volumes: [{ tamanho: '50ml', preco: 200 }, { tamanho: '100ml', preco: 400 }] },
+  { id: 'perf-1',  mongoId: '6a207cc96e1e4fdb36db6e98',  nome: 'IVY Rose',  preco: 199.90, familia: 'Floral',   genero: 'Feminino',  imagem: getImg('perfume.png'),   volumes: [{ tamanho: '50ml', preco: 200 }, { tamanho: '100ml', preco: 400 }] },
   { id: 'perf-2', mongoId: '6a207cc96e1e4fdb36db6e99',  nome: 'IVY Gold',      preco: 249.90, familia: 'Oriental', genero: 'Feminino',  imagem: getImg('perfume1.png'),  volumes: [{ tamanho: '50ml', preco: 220 }, { tamanho: '100ml', preco: 420 }] },
-  { id: 'perf-3', mongoId: '6a207cc96e1e4fdb36db6e9a', nome: 'IVY Black',     preco: 279.90, familia: 'Amadeirado', genero: 'Masculino', imagem: getImg('perfume2.png'),  volumes: [{ tamanho: '50ml', preco: 250 }, { tamanho: '100ml', preco: 450 }] },
-  { id: 'perf-4', mongoId: '6a207cc96e1e4fdb36db6e9b', nome: 'IVY Rose',      preco: 189.90, familia: 'Floral',   genero: 'Feminino',  imagem: getImg('perfume3.png'),  volumes: [{ tamanho: '50ml', preco: 180 }, { tamanho: '100ml', preco: 350 }] },
+  { id: 'perf-3', mongoId: '6a207cc96e1e4fdb36db6e9a', nome: 'IVY  Elegance',     preco: 279.90, familia: 'Amadeirado', genero: 'Masculino', imagem: getImg('perfume2.png'),  volumes: [{ tamanho: '50ml', preco: 250 }, { tamanho: '100ml', preco: 450 }] },
+  { id: 'perf-4', mongoId: '6a207cc96e1e4fdb36db6e9b', nome: 'IVY Bomb Black',      preco: 189.90, familia: 'Floral',   genero: 'Feminino',  imagem: getImg('perfume3.png'),  volumes: [{ tamanho: '50ml', preco: 180 }, { tamanho: '100ml', preco: 350 }] },
   { id: 'perf-5', mongoId: '6a207cc96e1e4fdb36db6e9c',  nome: 'IVY Night',     preco: 299.90, familia: 'Oriental', genero: 'Masculino', imagem: getImg('perfume4.png'),  volumes: [{ tamanho: '50ml', preco: 290 }, { tamanho: '100ml', preco: 520 }] },
   { id: 'perf-6', mongoId: '6a207cc96e1e4fdb36db6e9d',  nome: 'IVY Luxury',    preco: 349.90, familia: 'Floral',   genero: 'Unissex',   imagem: getImg('perfume5.png'),  volumes: [{ tamanho: '50ml', preco: 320 }, { tamanho: '100ml', preco: 600 }] },
   { id: 'perf-7',  mongoId: '6a207cc96e1e4fdb36db6e9e', nome: 'IVY Diamond',   preco: 379.90, familia: 'Cítrico',  genero: 'Unissex',   imagem: getImg('perfume6.png'),  volumes: [{ tamanho: '50ml', preco: 350 }, { tamanho: '100ml', preco: 650 }] },
@@ -419,31 +417,46 @@ const fecharModal = () => {
 // handleAddToCart atualizado
 const handleAddToCart = async () => {
   if (!produtoSelecionado.value || !volumeSelecionado.value) return
-
   const token = localStorage.getItem('token')
   if (!token) { router.push('/login'); return }
-
-  const p      = produtoSelecionado.value
+  const p = produtoSelecionado.value
   const volume = volumeSelecionado.value
-
   try {
     await axios.post(
       `${apiUrl}/api/cart`,
-      {
-        productId: p.mongoId,
-        name:      `${p.nome} (${volume.tamanho})`,
-        price:     volume.preco,
-        image:     p.imagem,
-        quantity:  1
-      },
+      { productId: p.mongoId, name: `${p.nome} (${volume.tamanho})`, price: volume.preco, image: p.imagem, quantity: 1 },
       { headers: { Authorization: `Bearer ${token}` } }
     )
     fecharModal()
-    router.push('/carrinho')
+    const toast = document.createElement('div')
+    toast.textContent = `"${p.nome}" adicionado ao carrinho 🛒`
+    toast.style.cssText = `position:fixed;bottom:30px;right:30px;z-index:9999;background:#0f0e0c;color:white;padding:14px 22px;border-radius:4px;font-size:13px;font-family:sans-serif;border-left:3px solid #c97b8a;box-shadow:0 8px 30px rgba(0,0,0,.3);`
+    document.body.appendChild(toast)
+    setTimeout(() => toast.remove(), 3000)
   } catch (error) {
     console.error('Erro ao adicionar ao carrinho:', error)
   }
 }
+
+const handleComprarAgora = async () => {
+  if (!produtoSelecionado.value || !volumeSelecionado.value) return
+  const token = localStorage.getItem('token')
+  if (!token) { router.push('/login'); return }
+  const p = produtoSelecionado.value
+  const volume = volumeSelecionado.value
+  try {
+    await axios.post(
+      `${apiUrl}/api/cart`,
+      { productId: p.mongoId, name: `${p.nome} (${volume.tamanho})`, price: volume.preco, image: p.imagem, quantity: 1 },
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    fecharModal()
+    router.push('/Checkout')
+  } catch (error) {
+    console.error('Erro ao comprar:', error)
+  }
+}
+
 const onScroll = () => { isScrolled.value = window.scrollY > 80 }
 onMounted(()   => window.addEventListener('scroll', onScroll))
 onUnmounted(() => window.removeEventListener('scroll', onScroll))

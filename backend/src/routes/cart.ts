@@ -8,8 +8,8 @@ import { auth }           from '../middlewares/auth'
 
 const router = Router()
 
-router.get('/',                auth, getCart)
 router.post('/',               auth, addToCart)
+router.get('/',                auth, getCart)
 router.put('/update',          auth, updateQuantity)
 router.delete('/clear',        auth, clearCart)
 router.delete('/item/:itemId', auth, removeFromCart)

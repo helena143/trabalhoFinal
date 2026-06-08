@@ -285,19 +285,19 @@ interface Produto {
 
 const produtos = ref([
   // SOLITÁRIOS
-  { id: 'sol-1', mongoId: '6a20a97cac6b2f17f374182a', nome: 'Solitário Premium',    preco: 4890, categoria: 'solitarios', imagem: `${API_URL}/public/products/anel4.png`,    avaliacoes: 62, temNumeracao: true, descricao: 'Solitário elegante em ouro 18k com pedra central premium de corte brilhante.' },
+  { id: 'sol-1', mongoId: '6a20a97cac6b2f17f374182a', nome: 'Anel Luxo Diamond Premium',    preco: 3100, categoria: 'solitarios', imagem: `${API_URL}/public/products/anel4.png`,    avaliacoes: 62, temNumeracao: true, descricao: 'Solitário elegante em ouro 18k com pedra central premium de corte brilhante.' },
   { id: 'sol-2', mongoId: '6a20a97cac6b2f17f374182b', nome: 'Solitário Clássico',   preco: 3290, categoria: 'solitarios', imagem: `${API_URL}/public/products/prata.png`,    avaliacoes: 41, temNumeracao: true, descricao: 'Design clássico e atemporal com diamante central em cravação solitária.' },
   { id: 'sol-3', mongoId: '6a20a97cac6b2f17f374182c', nome: 'Solitário Halo',       preco: 5490, categoria: 'solitarios', imagem: `${API_URL}/public/products/dourada.png`,  avaliacoes: 55, temNumeracao: true, descricao: 'Corte halo com pedra central envolvida por diamantes menores.' },
-  { id: 'sol-4', mongoId: '6a20a97cac6b2f17f374182d', nome: 'Solitário Pavê',       preco: 6200, categoria: 'solitarios', imagem: `${API_URL}/public/products/anel5.png`,    avaliacoes: 38, temNumeracao: true, descricao: 'Aro cravejado com diamantes no estilo pavê.' },
+  { id: 'sol-4', mongoId: '6a20a97cac6b2f17f374182d', nome: 'Anel  Diamante Cravejado',       preco: 2200, categoria: 'solitarios', imagem: `${API_URL}/public/products/anel5.png`,    avaliacoes: 38, temNumeracao: true, descricao: 'Aro cravejado com diamantes no estilo pavê.' },
   // ALIANÇAS
-  { id: 'ali-1', mongoId: '6a20a97cac6b2f17f374182e', nome: 'Aliança Ouro Clássica',preco: 2490, categoria: 'aliancas',  imagem: `${API_URL}/public/products/dp.png`,       avaliacoes: 47, temNumeracao: true, descricao: 'Aliança sofisticada em ouro 18k com acabamento premium.' },
+  { id: 'ali-1', mongoId: '6a20a97cac6b2f17f374182e', nome: 'Aliança Ouro Prata',preco: 2490, categoria: 'aliancas',  imagem: `${API_URL}/public/products/dp.png`,       avaliacoes: 47, temNumeracao: true, descricao: 'Aliança sofisticada em ouro 18k com acabamento premium.' },
   { id: 'ali-2', mongoId: '6a20a97cac6b2f17f374182f', nome: 'Aliança com Diamantes',preco: 3290, categoria: 'aliancas',  imagem: `${API_URL}/public/products/prata.png`,    avaliacoes: 35, temNumeracao: true, descricao: 'Modelo cravejado com diamantes de brilho intenso.' },
   { id: 'ali-3', mongoId: '6a20a97cac6b2f17f3741830', nome: 'Aliança Duo Brilho',   preco: 3890, categoria: 'aliancas',  imagem: `${API_URL}/public/products/alianças.png`, avaliacoes: 52, temNumeracao: true, descricao: 'Combinação perfeita de ouro polido e diamantes.' },
   { id: 'ali-4', mongoId: '6a20a97cac6b2f17f3741831', nome: 'Aliança Meia Volta',   preco: 2890, categoria: 'aliancas',  imagem: `${API_URL}/public/products/pratas.png`,   avaliacoes: 29, temNumeracao: true, descricao: 'Diamantes em meia volta que capturam a luz de todos os ângulos.' },
   // NOIVA
   { id: 'noiva-1', mongoId: '6a20a97cac6b2f17f3741832', nome: 'Brinco Pérola Royale',preco: 1290, categoria: 'noiva', imagem: `${API_URL}/public/products/brinconoiva.png`, avaliacoes: 53, temNumeracao: false, descricao: 'Design refinado com pérolas naturais e ouro 18k.' },
-  { id: 'noiva-2', mongoId: '6a20a97cac6b2f17f3741833', nome: 'Colar Nupcial',       preco: 2190, categoria: 'noiva', imagem: `${API_URL}/public/products/noiva.png`,       avaliacoes: 44, temNumeracao: false, descricao: 'Colar delicado em ouro 18k com pingente de diamante.' },
-  { id: 'noiva-3', mongoId: '6a20a97cac6b2f17f3741834', nome: 'Pulseira Nupcial',    preco: 980,  categoria: 'noiva', imagem: `${API_URL}/public/products/noivad.png`,      avaliacoes: 37, temNumeracao: false, descricao: 'Pulseira em ouro 18k com detalhes em zircônia.' },
+  { id: 'noiva-2', mongoId: '6a20a97cac6b2f17f3741833', nome: 'Brinco Prata',       preco: 2190, categoria: 'noiva', imagem: `${API_URL}/public/products/noiva.png`,       avaliacoes: 44, temNumeracao: false, descricao: 'Colar delicado em ouro 18k com pingente de diamante.' },
+  { id: 'noiva-3', mongoId: '6a20a97cac6b2f17f3741834', nome: 'Brinco Dourado',    preco: 980,  categoria: 'noiva', imagem: `${API_URL}/public/products/noivad.png`,      avaliacoes: 37, temNumeracao: false, descricao: 'Pulseira em ouro 18k com detalhes em zircônia.' },
   { id: 'noiva-4', mongoId: 'S6a20a97cac6b2f17f3741835', nome: 'Conjunto Nupcial',    preco: 3490, categoria: 'noiva', imagem: `${API_URL}/public/products/noivado.png`,     avaliacoes: 61, temNumeracao: false, descricao: 'Conjunto completo de brinco, colar e pulseira em ouro 18k.' },
   // NOIVO
   { id: 'noivo-1', mongoId: '6a20a97cac6b2f17f3741836', nome: 'Abotoadura Elegance', preco: 890,  categoria: 'noivo', imagem: `${API_URL}/public/products/noivo.png`,    avaliacoes: 44, temNumeracao: false, descricao: 'Acessório masculino sofisticado com acabamento premium.' },
@@ -432,12 +432,9 @@ import axios from 'axios'
 
 const adicionarCarrinho = async () => {
   if (!produtoSelecionado.value) return
-
   const token = localStorage.getItem('token')
   if (!token) { router.push('/login'); return }
-
   const p = produtoSelecionado.value
-
   try {
     await axios.post(
       `${API_URL}/api/cart`,
@@ -446,7 +443,6 @@ const adicionarCarrinho = async () => {
     )
     showToast(`"${p.nome}" adicionado ao carrinho 🛒`)
     fecharModal()
-    router.push({ name: 'carrinho' })
   } catch (error) {
     console.error('Erro ao adicionar ao carrinho:', error)
   }

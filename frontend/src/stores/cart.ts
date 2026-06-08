@@ -1,349 +1,126 @@
-import { reactive, watch } from "vue"
-import axios from "axios"
+import { reactive, watch } from 'vue'
+import axios from 'axios'
 
-/*
-|--------------------------------------------------------------------------
-| API
-|--------------------------------------------------------------------------
-*/
-
-const apiUrl = "http://localhost:3000"
-
-/*
-|--------------------------------------------------------------------------
-| TYPES
-|--------------------------------------------------------------------------
-*/
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 interface CartItem {
-
-  _id: string
-
-  name: string
-
-  image: string
-
-  price: number
-
+  _id:      string
+  productId: string
+  name:     string
+  image:    string
+  price:    number
   quantity: number
-
 }
 
-interface CartState {
-
-  items: CartItem[]
-
-}
-
-/*
-|--------------------------------------------------------------------------
-| STATE
-|--------------------------------------------------------------------------
-*/
+interface CartState { items: CartItem[] }
 
 export const cart = reactive<CartState>({
-
-  items: JSON.parse(
-    localStorage.getItem("cart") || "[]"
-  )
-
+  items: JSON.parse(localStorage.getItem('cart') || '[]')
 })
 
-/*
-|--------------------------------------------------------------------------
-| STORAGE
-|--------------------------------------------------------------------------
-*/
+watch(() => cart.items, items => {
+  localStorage.setItem('cart', JSON.stringify(items))
+}, { deep: true })
 
-watch(
+const authHeader = () => {
+  const token = localStorage.getItem('token')
+  return token ? { Authorization: `Bearer ${token}` } : null
+}
 
-  () => cart.items,
-
-  (items) => {
-
-    localStorage.setItem(
-
-      "cart",
-
-      JSON.stringify(items)
-
-    )
-
-  },
-
-  { deep: true }
-
-)
-
-/*
-|--------------------------------------------------------------------------
-| LOAD CART
-|--------------------------------------------------------------------------
-*/
+const mapItems = (items: any[]): CartItem[] =>
+  items.map(i => ({
+    _id:      String(i._id ?? ''),
+    productId: String(i.productId ?? i._id ?? ''),
+    name:     String(i.name ?? 'Produto'),
+    image:    String(i.image ?? ''),
+    price:    Number(i.price ?? 0),
+    quantity: Number(i.quantity ?? 1)
+  }))
 
 export const loadCart = async () => {
-
+  const headers = authHeader()
+  if (!headers) return
   try {
+    const { data } = await axios.get(`${apiUrl}/api/cart`, { headers })
+    cart.items = mapItems(data?.data?.items ?? [])
+  } catch (e) {
+    console.error('[loadCart]', e)
+  }
+}
 
-    const token =
-      localStorage.getItem("token")
+export const addToCartDirect = async (item: {
+  productId: string
+  name:      string
+  price:     number
+  image:     string
+  quantity?: number
+}) => {
+  const headers = authHeader()
+  if (!headers) throw new Error('Não autenticado')
 
-    if (!token) return
+  const qty = item.quantity ?? 1
 
-    const response = await axios.get(
-
-      `${apiUrl}/api/cart`,
-
-      {
-
-        headers: {
-
-          Authorization:
-            `Bearer ${token}`
-
-        }
-
-      }
-
-    )
-
-    const items =
-      response.data?.data?.items || []
-
-    cart.items = items
-
-      .filter(
-        (item: any) =>
-          item?.product
-      )
-
-      .map((item: any) => ({
-
-        _id:
-          item.product._id,
-
-        name:
-          item.product.name,
-
-        image:
-          item.product.image,
-
-        price:
-          item.product.price,
-
-        quantity:
-          item.quantity || 1
-
-      }))
-
-    console.log(
-      "CARRINHO:",
-      cart.items
-    )
-
-  } catch (error) {
-
-    console.log(
-      "ERRO LOAD CART:",
-      error
-    )
-
+  // Atualiza LOCAL imediatamente (sem esperar API)
+  const existing = cart.items.find(i => i.productId === item.productId || i._id === item.productId)
+  if (existing) {
+    existing.quantity += qty
+  } else {
+    cart.items.push({
+      _id:       item.productId,
+      productId: item.productId,
+      name:      item.name,
+      price:     item.price,
+      image:     item.image,
+      quantity:  qty
+    })
   }
 
-}
-
-/*
-|--------------------------------------------------------------------------
-| ADD TO CART
-|--------------------------------------------------------------------------
-*/
-
-export const addToCart = async (
-  product: any
-) => {
-
+  // Sincroniza com backend em paralelo
   try {
+    const { data } = await axios.post(`${apiUrl}/api/cart`, {
+      productId: item.productId,
+      name:      item.name,
+      price:     item.price,
+      image:     item.image,
+      quantity:  qty
+    }, { headers })
 
-    const token =
-      localStorage.getItem("token")
-
-    if (!token) {
-
-      alert("Faça login")
-
-      return
-
+    // Se backend retornou itens, sincroniza
+    const backendItems = data?.data?.items ?? []
+    if (backendItems.length > 0) {
+      cart.items = mapItems(backendItems)
     }
-
-    /*
-    |--------------------------------------------------------------------------
-    | PRODUCT ID
-    |--------------------------------------------------------------------------
-    */
-
-    const productId =
-      product._id
-
-    console.log(
-      "PRODUTO:",
-      product
-    )
-
-    console.log(
-      "PRODUCT ID:",
-      productId
-    )
-
-    if (!productId) {
-
-      alert(
-        "Produto sem _id do MongoDB"
-      )
-
-      return
-
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | API
-    |--------------------------------------------------------------------------
-    */
-
-    const response = await axios.post(
-
-      `${apiUrl}/api/cart`,
-
-      {
-
-        productId,
-
-        quantity: 1
-
-      },
-
-      {
-
-        headers: {
-
-          Authorization:
-            `Bearer ${token}`
-
-        }
-
-      }
-
-    )
-
-    /*
-    |--------------------------------------------------------------------------
-    | UPDATE CART
-    |--------------------------------------------------------------------------
-    */
-
-    const items =
-      response.data?.data?.items || []
-
-    cart.items = items
-
-      .filter(
-        (item: any) =>
-          item?.product
-      )
-
-      .map((item: any) => ({
-
-        _id:
-          item.product._id,
-
-        name:
-          item.product.name,
-
-        image:
-          item.product.image,
-
-        price:
-          item.product.price,
-
-        quantity:
-          item.quantity || 1
-
-      }))
-
-    alert(
-      "Produto adicionado!"
-    )
-
-  } catch (error: any) {
-
-    console.log(
-      "ERRO ADD CART:",
-      error.response?.data ||
-      error
-    )
-
-    alert(
-      "Erro ao adicionar produto"
-    )
-
+  } catch (e) {
+    console.error('[addToCartDirect]', e)
+    // Mantém o estado local mesmo se API falhar
   }
-
 }
 
-/*
-|--------------------------------------------------------------------------
-| REMOVE
-|--------------------------------------------------------------------------
-*/
+export const addToCart = async (product: {
+  _id: string; name: string; price: number; image: string
+}) => addToCartDirect({
+  productId: product._id,
+  name:      product.name,
+  price:     product.price,
+  image:     product.image
+})
 
-export const removeFromCart = (
-  id: string
-) => {
-
-  cart.items =
-    cart.items.filter(
-
-      item =>
-        item._id !== id
-
-    )
-
+export const removeFromCart = async (id: string) => {
+  const headers = authHeader()
+  cart.items = cart.items.filter(i => i._id !== id)
+  if (headers) {
+    try {
+      await axios.delete(`${apiUrl}/api/cart/item/${id}`, { headers })
+    } catch (e) {
+      console.error('[removeFromCart]', e)
+    }
+  }
 }
 
-/*
-|--------------------------------------------------------------------------
-| CLEAR
-|--------------------------------------------------------------------------
-*/
+export const clearCart = () => { cart.items = [] }
 
-export const clearCart = () => {
+export const getTotal = () =>
+  cart.items.reduce((acc, i) => acc + i.price * i.quantity, 0)
 
-  cart.items = []
-
-}
-
-/*
-|--------------------------------------------------------------------------
-| TOTAL
-|--------------------------------------------------------------------------
-*/
-
-export const getTotal = () => {
-
-  return cart.items.reduce(
-
-    (acc, item) => {
-
-      return (
-        acc +
-        item.price *
-        item.quantity
-      )
-
-    },
-
-    0
-
-  )
-
-}
+export const getCount = () =>
+  cart.items.reduce((acc, i) => acc + i.quantity, 0)

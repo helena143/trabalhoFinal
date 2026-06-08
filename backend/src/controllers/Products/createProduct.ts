@@ -1,46 +1,29 @@
 import { Request, Response } from "express";
 import Product from "../../models/Product";
 
-export const createProduct = async (
-  req: Request,
-  res: Response
-) => {
-
+export const createProduct = async (req: Request, res: Response) => {
   try {
+    console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
 
-    const {
-      name,
-      description,
-      price,
-      stock,
-      category
-    } = req.body;
+    const { name, price, stock, category, description } = req.body;
 
     const image = req.file
-      ? `/uploads/${req.file.filename}`
-      : "";
+      ? `/public/products/${req.file.filename}`
+      : null;
 
-    const product = new Product({
-
+    const product = await Product.create({
       name,
-      description,
       price,
       stock,
       category,
+      description,
       image
-
     });
 
-    await product.save();
-
-    res.status(201).json(product);
-
-  } catch (error: any) {
-
-    res.status(500).json({
-      error: error.message
-    });
-
+    return res.status(201).json(product);
+  } catch (error) {
+    console.log("ERRO CREATE:", error);
+    return res.status(500).json({ message: "Erro ao criar produto" });
   }
-
 };

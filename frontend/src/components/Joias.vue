@@ -1,4 +1,3 @@
-
 <template>
   <div class="joias-page">
 
@@ -236,7 +235,7 @@
                   </svg>
                   Adicionar à Sacola
                 </button>
-    <button class="btn-comprar" @click="handleComprarAgora">
+   <button class="btn-comprar" @click="handleComprarAgora">
   Comprar Agora
 </button>
               </div>
@@ -256,8 +255,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { IJoia } from '@/interface/IJoias'
-import axios from 'axios'
-// ← removido o import do addToCart
+import { addToCartDirect } from '@/stores/cart'
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 const router     = useRouter()
@@ -271,37 +269,39 @@ const ordenacao = ref('')
 
 const produtoSelecionado = ref<IJoia | null>(null)
 
+const getImg = (name: string) => `${apiUrl}/public/products/${name}`
+
+const joias = ref<IJoia[]>([
+  { id: 'j-1',   mongoid: '6a2065406e1e4fdb36db6e7d', nome: 'Anel Solitário Diamond',   preco: 2490, categoria: 'Anéis',     material: 'Prata',   imagem: getImg('anel2.png'),       },
+  { id: 'j-2',   mongoid: '6a2065406e1e4fdb36db6e7e', nome: 'Anel Riviera',        preco: 1850, categoria: 'Anéis',     material: 'Prata',   imagem: getImg('anel3.png'),      },
+  { id: 'j-101', mongoid: '6a2065406e1e4fdb36db6e7f', nome: 'Anel Luxo Diamond Premium', preco: 3100, categoria: 'Anéis',     material: 'Dourado', imagem: getImg('anel4.png'), },
+  { id: 'j-102', mongoid: '6a2065406e1e4fdb36db6e80', nome: 'Anel Ouro Diamante Cravejado',          preco: 2200, categoria: 'Anéis',     material: 'Prata',   imagem: getImg('anel5.png'),      },
+  { id: 'j-103', mongoid: '6a2065406e1e4fdb36db6e81', nome: 'Anel Ouro Rose',            preco: 4200, categoria: 'Anéis',     material: 'Dourado', imagem: getImg('anel6.png'),       },
+
+  { id: 'j-3',   mongoid: '6a2065406e1e4fdb36db6e82', nome: 'Anel Eternity Gold',      preco: 3200, categoria: 'Anéis',     material: 'Prata',   imagem: getImg('anel1.png'),      },
+  { id: 'j-4',   mongoid: '6a2065406e1e4fdb36db6e83', nome: 'Colar Ponto de Luz',        preco: 980,  categoria: 'Colares',   material: 'Prata',   imagem: getImg('colar4.png'),     },
+  { id: 'j-201', mongoid: '6a2065406e1e4fdb36db6e84', nome: 'Colar Luxo Safira',         preco: 2900, categoria: 'Colares',   material: 'Prata',   imagem: getImg('chome.png'),       },
+  { id: 'j-202', mongoid: '6a2065406e1e4fdb36db6e85', nome: 'Colar de Rubi',   preco: 3400, categoria: 'Colares',   material: 'Prata',   imagem: getImg('rubi.png'),        },
+
+  { id: 'j-5',   mongoid: '6a2065406e1e4fdb36db6e86', nome: 'Brincos Pérola',            preco: 1100, categoria: 'Brincos',   material: 'Dourado', imagem: getImg('brinco1.png'),    },
+  { id: 'j-6',   mongoid: '6a2065406e1e4fdb36db6e87', nome: 'Argolas Douradas',          preco: 750,  categoria: 'Brincos',   material: 'Dourado', imagem: getImg('argola1.png'),     },
+  { id: 'j-301', mongoid: '6a2065406e1e4fdb36db6e88', nome: 'Brinco Diamante Premium',   preco: 2100, categoria: 'Brincos',   material: 'Prata',   imagem: getImg('brinco2.png'),    },
+  { id: 'j-302', mongoid: '6a2065406e1e4fdb36db6e89', nome: 'Brinco Coração Ouro Branco',   preco: 1950, categoria: 'Brincos',   material: 'Dourado', imagem: getImg('coracao1.png'),    },
+
+  { id: 'j-7',   mongoid: '6a2065406e1e4fdb36db6e8a', nome: 'Pulseira Riviera Dourada',           preco: 2100, categoria: 'Pulseiras', material: 'Dourado', imagem: getImg('pulseira1.png'),   },
+  { id: 'j-8',   mongoid: '6a2065406e1e4fdb36db6e8b', nome: 'Pulseira Diamond Dourada',         preco: 1450, categoria: 'Pulseiras', material: 'Dourado', imagem: getImg('pulseira5.png'),   },
+  { id: 'j-401', mongoid: '6a2065406e1e4fdb36db6e8c', nome: 'Pulseira Riviera Premium',        preco: 2800, categoria: 'Pulseiras', material: 'Prata',   imagem: getImg('pulseira12.png'),  },
+  { id: 'j-402', mongoid: '6a2065406e1e4fdb36db6e8d', nome: 'Pulseira Diamond',        preco: 459, categoria: 'Pulseiras', material: 'Prata',   imagem: getImg('pulseira4.png'),   },
+  { id: 'j-403', mongoid: '6a2065406e1e4fdb36db6e8e', nome: 'Anel Coração Diamante',         preco: 3600, categoria: 'Anéis',     material: 'Prata',   imagem: getImg('coraçao.png'),     }
+])
+
 const categorias = computed<string[]>(() =>
-  ['Todos', ...new Set(joias.map(p => p.categoria))]
+  ['Todos', ...new Set(joias.value.map(p => p.categoria))]
 )
 
 const materiais = computed<string[]>(() =>
-  ['Todos', ...new Set(joias.map(p => p.material))]
+  ['Todos', ...new Set(joias.value.map(p => p.material))]
 )
-
-const getImg = (name: string) =>
-  `${apiUrl}/public/products/${name}`
-
-const joias: IJoia[] = [
-  { id: 'j-1',   mongoId: '6a2065406e1e4fdb36db6e7d', nome: 'Anel Solitário Diamond',   preco: 2490, categoria: 'Anéis',     material: 'Prata',   imagem: getImg('anel2.png'),      genero: 'M' },
-  { id: 'j-2',   mongoId: '6a2065406e1e4fdb36db6e7e', nome: 'Anel Eternity Gold',        preco: 1850, categoria: 'Anéis',     material: 'Prata',   imagem: getImg('anel3.png'),      genero: 'F' },
-  { id: 'j-101', mongoId: '6a2065406e1e4fdb36db6e7f', nome: 'Anel Luxo Diamond Premium', preco: 3100, categoria: 'Anéis',     material: 'Dourado', imagem: getImg('anel4.png'),      genero: 'M' },
-  { id: 'j-102', mongoId: '6a2065406e1e4fdb36db6e80', nome: 'Anel Ouro Branco',          preco: 2200, categoria: 'Anéis',     material: 'Prata',   imagem: getImg('anel5.png'),      genero: 'F' },
-  { id: 'j-103', mongoId: '6a2065406e1e4fdb36db6e81', nome: 'Anel Ouro Rose',            preco: 4200, categoria: 'Anéis',     material: 'Dourado', imagem: getImg('anel6.png'),      genero: 'F' },
-  { id: 'j-3',   mongoId: '6a2065406e1e4fdb36db6e82', nome: 'Colar Esmeralda Luxo',     preco: 3200, categoria: 'Anéis',     material: 'Prata',   imagem: getImg('anel1.png'),      genero: 'M' },
-  { id: 'j-4',   mongoId: '6a2065406e1e4fdb36db6e83', nome: 'Colar Ponto de Luz',       preco:  980, categoria: 'Colares',   material: 'Prata',   imagem: getImg('colar4.png'),     genero: 'M' },
-  { id: 'j-201', mongoId: '6a2065406e1e4fdb36db6e84', nome: 'Colar Luxo Safira',        preco: 2900, categoria: 'Colares',   material: 'Prata',   imagem: getImg('chome.png'),      genero: 'M' },
-  { id: 'j-202', mongoId: '6a2065406e1e4fdb36db6e85', nome: 'Colar Diamante Elegance',  preco: 3400, categoria: 'Colares',   material: 'Prata',   imagem: getImg('rubi.png'),       genero: 'M' },
-  { id: 'j-5',   mongoId: '6a2065406e1e4fdb36db6e86', nome: 'Brincos Pérola',           preco: 1100, categoria: 'Brincos',   material: 'Dourado', imagem: getImg('brinco1.png'),    genero: 'M' },
-  { id: 'j-6',   mongoId: '6a2065406e1e4fdb36db6e87', nome: 'Argolas Douradas',         preco:  750, categoria: 'Brincos',   material: 'Dourado', imagem: getImg('argola1.png'),    genero: 'M' },
-  { id: 'j-301', mongoId: '6a2065406e1e4fdb36db6e88', nome: 'Brinco Diamante Premium',  preco: 2100, categoria: 'Brincos',   material: 'Prata',   imagem: getImg('brinco2.png'),    genero: 'M' },
-  { id: 'j-302', mongoId: '6a2065406e1e4fdb36db6e89', nome: 'Brinco Luxo Ouro Branco',  preco: 1950, categoria: 'Brincos',   material: 'Dourado', imagem: getImg('coracao1.png'),   genero: 'M' },
-  { id: 'j-7',   mongoId: '6a2065406e1e4fdb36db6e8a', nome: 'Pulseira Grumet',          preco: 2100, categoria: 'Pulseiras', material: 'Dourado', imagem: getImg('pulseira1.png'),  genero: 'M' },
-  { id: 'j-8',   mongoId: '6a2065406e1e4fdb36db6e8b', nome: 'Bracelete Classic',        preco: 1450, categoria: 'Pulseiras', material: 'Dourado', imagem: getImg('pulseira5.png'),  genero: 'M' },
-  { id: 'j-401', mongoId: '6a2065406e1e4fdb36db6e8c', nome: 'Pulseira Luxo Gold',       preco: 2800, categoria: 'Pulseiras', material: 'Prata',   imagem: getImg('pulseira12.png'), genero: 'M' },
-  { id: 'j-402', mongoId: '6a2065406e1e4fdb36db6e8d', nome: 'Bracelete Diamante',       preco: 3600, categoria: 'Pulseiras', material: 'Prata',   imagem: getImg('pulseira4.png'),  genero: 'M' },
-  { id: 'j-403', mongoId: '6a2065406e1e4fdb36db6e8e', nome: 'Bracelete Coração',        preco: 3600, categoria: 'Anéis',     material: 'Prata',   imagem: getImg('coraçao.png'),    genero: 'M' },
-]
 
 const moverZoom = (e: MouseEvent) => {
   const container = e.currentTarget as HTMLElement
@@ -321,7 +321,7 @@ const resetZoom = (e: MouseEvent) => {
 }
 
 const produtosFiltrados = computed(() => {
-  let lista = [...joias]
+  let lista = [...joias.value]
   if (categoriaSelecionada.value !== 'Todos') lista = lista.filter(p => p.categoria === categoriaSelecionada.value)
   if (materialSelecionado.value  !== 'Todos') lista = lista.filter(p => p.material  === materialSelecionado.value)
   if (busca.value.trim()) lista = lista.filter(p => p.nome.toLowerCase().includes(busca.value.toLowerCase()))
@@ -351,45 +351,35 @@ const fecharModal = () => {
   document.body.style.overflow = ''
 }
 
-const postCarrinho = async () => {
-  const token = localStorage.getItem('token')
-  if (!token) { router.push('/login'); return false }
-
-  const p = produtoSelecionado.value!
-
-  await axios.post(
-    `${apiUrl}/api/cart`,
-    { productId: p.mongoId, name: p.nome, price: p.preco, image: p.imagem, quantity: 1 },
-    { headers: { Authorization: `Bearer ${token}` } }
-  )
-  return true
-}
-
 const handleAddToCart = async () => {
   if (!produtoSelecionado.value) return
+  const token = localStorage.getItem('token')
+  if (!token) { router.push('/login'); return }
+  const p = produtoSelecionado.value
   try {
-    const ok = await postCarrinho()
-    if (!ok) return
+    await addToCartDirect({ productid: p.mongoid, name: p.nome, price: p.preco, image: p.imagem })
     fecharModal()
-    router.push('/carrinho')       // ← caminho direto, sem depender do name
+    const toast = document.createElement('div')
+    toast.textContent = `"${p.nome}" adicionado ao carrinho 🛒`
+    toast.style.cssText = `position:fixed;bottom:30px;right:30px;z-index:9999;background:#0f0e0c;color:white;padding:14px 22px;border-radius:4px;font-size:13px;font-family:sans-serif;border-left:3px solid #c9a84c;box-shadow:0 8px 30px rgba(0,0,0,.3);`
+    document.body.appendChild(toast)
+    setTimeout(() => toast.remove(), 3000)
   } catch (error: any) {
-    console.error('Erro carrinho:', error.response?.data)
+    console.error('Erro carrinho:', error)
   }
 }
 
 const handleComprarAgora = async () => {
   if (!produtoSelecionado.value) return
+  const token = localStorage.getItem('token')
+  if (!token) { router.push('/login'); return }
+  const p = produtoSelecionado.value
   try {
-    const ok = await postCarrinho()
-    if (!ok) return
-    const p = produtoSelecionado.value
-    localStorage.setItem('checkoutProduto', JSON.stringify({
-      productId: p.mongoId, name: p.nome, price: p.preco, image: p.imagem, quantity: 1
-    }))
+    await addToCartDirect({ productId: p.mongoid, name: p.nome, price: p.preco, image: p.imagem })
     fecharModal()
-    router.push('/checkout')       // ← caminho direto
-  } catch (error: any) {
-    console.error('Erro checkout:', error.response?.data)
+    router.push('/Checkout')
+  } catch (error) {
+    console.error('Erro ao comprar:', error)
   }
 }
 

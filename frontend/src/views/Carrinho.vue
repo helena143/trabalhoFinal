@@ -70,16 +70,18 @@
                     <strong>R$ {{ (item.price * item.quantity).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) }}</strong>
                   </div>
 
-                  <button class="buy-now-btn" @click="handleBuyNow(item)" :disabled="checkoutLoading">
-                    Comprar agora
-                  </button>
+                
                 </div>
 
               </div>
             </TransitionGroup>
 
             <div class="clear-wrapper">
-              <button class="clear-btn" @click="handleClearCart" :disabled="clearLoading">
+             <button
+  class="clear-btn"
+  @click="showClearModal = true"
+  :disabled="clearLoading"
+>
                 <Loader2 v-if="clearLoading" :size="14" class="spin" />
                 <Trash2 v-else :size="14" />
                 {{ clearLoading ? 'Limpando...' : 'Limpar Sacola' }}
@@ -152,13 +154,57 @@
       </div>
     </div>
   </div>
+  <!-- MODAL LIMPAR SACOLA -->
+<Transition name="modal-fade">
+  <div
+    v-if="showClearModal"
+    class="modal-overlay"
+    @click.self="showClearModal = false"
+  >
+    <div class="modal-card">
+<div class="modal-icon">
+  <AlertTriangle :size="36" />
+</div>
+      <h2>Limpar Sacola?</h2>
+
+      <p>
+        Todos os produtos serão removidos da sua sacola.
+        Esta ação não poderá ser desfeita.
+      </p>
+
+      <div class="modal-actions">
+        <button
+          class="btn-cancel"
+          @click="showClearModal = false"
+        >
+          Cancelar
+        </button>
+
+        <button
+          class="btn-confirm"
+          @click="confirmClearCart"
+        >
+          Sim, remover tudo
+        </button>
+      </div>
+
+    </div>
+  </div>
+</Transition>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
-import { X, ShoppingBag, Truck, Loader2, Trash2 } from 'lucide-vue-next'
+import {
+  X,
+  ShoppingBag,
+  Truck,
+  Loader2,
+  Trash2,
+  AlertTriangle
+} from 'lucide-vue-next'
 import { cart, getTotal } from '@/stores/cart'
 
 const router = useRouter()
@@ -174,6 +220,7 @@ const couponInput     = ref('')
 const discount        = ref(0)
 const checkoutLoading = ref(false)
 const errorMsg        = ref('')
+const showClearModal = ref(false)
 
 // ── CUPONS ──
 const CUPONS: Record<string, number> = {
@@ -212,16 +259,11 @@ const amountToFreeShipping = computed(() => Math.max(0, 1500 - getTotal()))
 const finalTotal = computed(() => Math.max(0, getTotal() + shippingValue.value - discount.value))
 
 // ── NORMALIZA ITEM ──
-// Tenta extrair nome/imagem/preço de TODAS as estruturas possíveis do Mongoose
 const normalizeItem = (raw: any) => {
-  console.log('[Cart] Item bruto:', JSON.stringify(raw))
-
-  // O produto pode estar em raw.product, raw.productId, ou no próprio raw
   const p = (raw?.product && typeof raw.product === 'object') ? raw.product
           : (raw?.productId && typeof raw.productId === 'object') ? raw.productId
           : raw
 
-  // ID: tenta p._id, p.id, raw._id, raw.productId (quando é string)
   const _id = String(
     p?._id ?? p?.id ??
     raw?._id ??
@@ -232,11 +274,9 @@ const normalizeItem = (raw: any) => {
 
   const name     = String(p?.name  ?? p?.title ?? raw?.name  ?? raw?.title ?? 'Produto')
   const price    = Number(p?.price ?? raw?.price ?? 0)
-  const image    = String(p?.image ?? p?.foto  ?? p?.thumbnail ?? p?.img ??
+  const image    = String(p?.image ?? p?.foto ?? p?.thumbnail ?? p?.img ??
                           raw?.image ?? raw?.foto ?? raw?.thumbnail ?? raw?.img ?? '')
   const quantity = Number(raw?.quantity ?? raw?.qty ?? raw?.amount ?? 1)
-
-  console.log(`[Cart] Normalizado → id:${_id} | name:${name} | price:${price} | image:${image} | qty:${quantity}`)
 
   return { _id, name, price, image, quantity }
 }
@@ -251,19 +291,15 @@ const loadCart = async () => {
 
   try {
     const { data } = await axios.get(`${apiUrl}/api/cart`, { headers })
-    console.log('[Cart] Resposta completa:', JSON.stringify(data, null, 2))
 
-    // Encontra o array de itens em qualquer nível da resposta
     const rawItems: any[] =
-      Array.isArray(data)                    ? data            :
-      Array.isArray(data?.items)             ? data.items      :
-      Array.isArray(data?.data?.items)       ? data.data.items :
-      Array.isArray(data?.data)              ? data.data       :
-      Array.isArray(data?.cart?.items)       ? data.cart.items :
-      Array.isArray(data?.result?.items)     ? data.result.items :
+      Array.isArray(data)                ? data            :
+      Array.isArray(data?.items)         ? data.items      :
+      Array.isArray(data?.data?.items)   ? data.data.items :
+      Array.isArray(data?.data)          ? data.data       :
+      Array.isArray(data?.cart?.items)   ? data.cart.items :
+      Array.isArray(data?.result?.items) ? data.result.items :
       []
-
-    console.log('[Cart] rawItems encontrados:', rawItems.length)
 
     cart.items = rawItems
       .filter((item: any) => item != null)
@@ -316,24 +352,36 @@ const handleQuantity = async (item: any, change: number) => {
     console.error('[Cart] Erro quantidade:', err.response?.data ?? err.message)
   }
 }
+// ── CONFIRMAR LIMPEZA ──
+const confirmClearCart = async () => {
+  showClearModal.value = false
+  await handleClearCart()
+}
+
 
 // ── LIMPAR CARRINHO ──
 const handleClearCart = async () => {
   const headers = getAuthHeader()
   if (!headers) return
+
   clearLoading.value = true
   errorMsg.value = ''
+
   const snapshot = [...cart.items]
   cart.items = []
+
   try {
     await axios.delete(`${apiUrl}/api/cart/clear`, { headers })
   } catch (err: any) {
     const status = err.response?.status
+
     if (status === 404 || status === 405) {
       try {
-        await Promise.all(snapshot.map(i =>
-          axios.delete(`${apiUrl}/api/cart/item/${i._id}`, { headers })
-        ))
+        await Promise.all(
+          snapshot.map(i =>
+            axios.delete(`${apiUrl}/api/cart/item/${i._id}`, { headers })
+          )
+        )
       } catch {
         cart.items = snapshot
         errorMsg.value = 'Erro ao limpar a sacola.'
@@ -346,17 +394,38 @@ const handleClearCart = async () => {
     clearLoading.value = false
   }
 }
-
 // ── CALCULAR FRETE ──
 const handleShipping = async () => {
   const clean = zipCode.value.replace(/\D/g, '')
   if (clean.length < 8) { errorMsg.value = 'CEP inválido'; return }
+
   shippingLoading.value = true
   errorMsg.value = ''
+
   try {
     const { data } = await axios.get(`https://viacep.com.br/ws/${clean}/json/`)
     if (data.erro) { errorMsg.value = 'CEP não encontrado'; return }
-    shippingValue.value = getTotal() >= 1500 ? 0 : data.uf === 'SP' ? 25 : 50
+
+    const total = getTotal()
+
+    if (total >= 1500) {
+      shippingValue.value = 0
+      return
+    }
+
+    // Tabela por UF (mesma do header)
+    const tabela: Record<string, number> = {
+      SP: 12.90, MG: 11.90, RJ: 14.90, ES: 13.90,
+      PR: 15.90, SC: 16.90, RS: 18.90, BA: 21.90,
+      PE: 22.90, CE: 24.90, GO: 19.90, DF: 17.90,
+      MT: 23.90, MS: 22.90, AM: 34.90, PA: 32.90,
+      MA: 28.90, PI: 27.90, RN: 26.90, PB: 25.90,
+      AL: 24.90, SE: 23.90, TO: 26.90, AC: 38.90,
+      RO: 36.90, RR: 39.90, AP: 37.90,
+    }
+
+    shippingValue.value = tabela[data.uf] ?? 29.90
+
   } catch {
     errorMsg.value = 'Erro ao calcular frete'
   } finally {
@@ -372,27 +441,7 @@ const applyCoupon = () => {
   errorMsg.value = ''
 }
 
-// ── COMPRAR AGORA ──
-const handleBuyNow = async (item: any) => {
-  const headers = getAuthHeader()
-  if (!headers) return
-  checkoutLoading.value = true
-  errorMsg.value = ''
-  try {
-    await axios.post(`${apiUrl}/api/orders`, {
-      items:    [item],
-      subtotal: item.price * item.quantity,
-      shipping: shippingValue.value,
-      discount: 0,
-      address:  zipCode.value,
-    }, { headers })
-    router.push('/perfil')
-  } catch (err: any) {
-    errorMsg.value = err.response?.data?.message || 'Erro ao processar. Tente novamente.'
-  } finally {
-    checkoutLoading.value = false
-  }
-}
+
 
 // ── FINALIZAR PEDIDO ──
 const handleFinalize = async () => {
@@ -402,16 +451,7 @@ const handleFinalize = async () => {
   checkoutLoading.value = true
   errorMsg.value = ''
   try {
-    await axios.post(`${apiUrl}/api/orders`, {
-      items:    cart.items,
-      subtotal: getTotal(),
-      shipping: shippingValue.value,
-      discount: discount.value,
-      address:  zipCode.value,
-    }, { headers })
-    cart.items = []
-    localStorage.removeItem('cart')
-    router.push('/perfil')
+    router.push('/Checkout')
   } catch (err: any) {
     errorMsg.value = err.response?.data?.message || 'Erro ao finalizar pedido. Tente novamente.'
   } finally {
@@ -551,5 +591,117 @@ const handleFinalize = async () => {
   .product-card { flex-direction: column; }
   .product-image img { width: 100%; height: 260px; }
   .empty-state h1 { font-size: 40px; }
+}
+/* ===== MODAL LIMPAR SACOLA ===== */
+
+.modal-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(10,18,32,.75);
+  backdrop-filter: blur(8px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:9999;
+}
+
+.modal-card{
+  width: 480px;
+  max-width: calc(100vw - 40px);
+  background: #fff;
+  border-radius: 28px;
+  padding: 40px;
+  text-align:center;
+  box-shadow:
+    0 30px 80px rgba(0,0,0,.18);
+  border: 1px solid rgba(212,175,55,.2);
+}
+
+.modal-icon{
+  width: 82px;
+  height: 82px;
+  margin: 0 auto 22px;
+  border-radius: 50%;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  background: linear-gradient(
+    135deg,
+    #d4af37,
+    #f2d675
+  );
+
+  color:#0a1220;
+}
+
+.modal-card h2{
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 40px;
+  color: #0a1220;
+  margin-bottom: 12px;
+}
+
+.modal-card p{
+  color: #7a7a7a;
+  line-height: 1.8;
+  font-size: 14px;
+  margin-bottom: 28px;
+}
+
+.modal-actions{
+  display:flex;
+  gap:14px;
+}
+
+.btn-cancel,
+.btn-confirm{
+  flex:1;
+  height:56px;
+  border:none;
+  border-radius:14px;
+  cursor:pointer;
+  font-family:'Jost', sans-serif;
+  text-transform:uppercase;
+  letter-spacing:2px;
+  transition:.3s;
+}
+
+.btn-cancel{
+  background:#f3f3f3;
+  color:#666;
+}
+
+.btn-cancel:hover{
+  transform:translateY(-2px);
+}
+
+.btn-confirm{
+  background:#0a1220;
+  color:#fff;
+}
+
+.btn-confirm:hover{
+  background:#d4af37;
+  color:#0a1220;
+  transform:translateY(-2px);
+}
+
+/* animação */
+
+.modal-fade-enter-active,
+.modal-fade-leave-active{
+  transition:.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to{
+  opacity:0;
+}
+
+.modal-fade-enter-from .modal-card,
+.modal-fade-leave-to .modal-card{
+  transform:translateY(20px) scale(.95);
 }
 </style>

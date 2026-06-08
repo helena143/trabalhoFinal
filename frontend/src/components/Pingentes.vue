@@ -207,22 +207,22 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import type { IPingente } from '@/interface/IPingente'
-import axios from 'axios'  // ← troca o addToCart pelo axios
+import { addToCart as addToCartStore, loadCart } from '@/stores/cart'
 
 const router  = useRouter()
 const API_URL = 'http://localhost:3000'
 
-const busca = ref<string>('')
-const ordenar = ref<string>('')
+const busca          = ref<string>('')
+const ordenar        = ref<string>('')
 const materialFiltro = ref<string>('')
 
 const produtoSelecionado = ref<IPingente | null>(null)
-const toastVisivel = ref<boolean>(false)
-const toastMensagem = ref<string>('')
+const toastVisivel   = ref<boolean>(false)
+const toastMensagem  = ref<string>('')
 
 const showToast = (msg: string) => {
   toastMensagem.value = msg
-  toastVisivel.value = true
+  toastVisivel.value  = true
   setTimeout(() => (toastVisivel.value = false), 3000)
 }
 
@@ -232,9 +232,7 @@ const moverZoom = (e: MouseEvent) => {
   const img = container.querySelector('img') as HTMLImageElement
   if (!img) return
   const rect = container.getBoundingClientRect()
-  img.style.transformOrigin = `${((e.clientX - rect.left) / rect.width) * 100}% ${
-    ((e.clientY - rect.top) / rect.height) * 100
-  }%`
+  img.style.transformOrigin = `${((e.clientX - rect.left) / rect.width) * 100}% ${((e.clientY - rect.top) / rect.height) * 100}%`
   img.style.transform = 'scale(2.4)'
 }
 
@@ -246,7 +244,7 @@ const resetZoom = (e: MouseEvent) => {
   img.style.transform = 'scale(1)'
 }
 
-/* ── TODOS OS PINGENTES (BACKEND IMAGES) ── */
+/* ── PINGENTES ── */
 const pingentes = ref<IPingente[]>([
   { id: 1,  mongoId: '6a20b216ac6b2f17f374183d', nome: 'Pulseira Berloque',      preco: 89.90,  tipo: 'prata',   imagem: `${API_URL}/public/products/berloque.png`,    descricao: 'Confeccionada em prata 925 com acabamento polido.' },
   { id: 2,  mongoId: '6a20b216ac6b2f17f374183e', nome: 'Coração',                preco: 300.00, tipo: 'prata',   imagem: `${API_URL}/public/products/berloque1.png`,   descricao: 'Pingente em forma de coração em prata.' },
@@ -258,23 +256,24 @@ const pingentes = ref<IPingente[]>([
   { id: 8,  mongoId: '6a20b216ac6b2f17f3741844', nome: 'Bola de Vôlei',          preco: 200.00, tipo: 'prata',   imagem: `${API_URL}/public/products/berloque11.png`,  descricao: 'Pingente esportivo em prata.' },
   { id: 9,  mongoId: '6a20b216ac6b2f17f3741845', nome: 'Felicidade',             preco: 200.00, tipo: 'prata',   imagem: `${API_URL}/public/products/berloque12.png`,  descricao: 'Palavra felicidade gravada em prata.' },
   { id: 10, mongoId: '6a20b216ac6b2f17f3741846', nome: 'Câmera Fotográfica',     preco: 299.90, tipo: 'prata',   imagem: `${API_URL}/public/products/pingente13.png`,  descricao: 'Câmera detalhada em prata 925.' },
-  { id: 11, mongoId: '6a20b216ac6b2f17f3741847', nome: 'Câmera Clássica',        preco: 299.90, tipo: 'prata',   imagem: `${API_URL}/public/products/berloque13.png`,  descricao: 'Modelo clássico de câmera em prata.' },
+  { id: 11, mongoId: '6a20b216ac6b2f17f3741847', nome: 'Tartaruga',        preco: 299.90, tipo: 'prata',   imagem: `${API_URL}/public/products/berloque13.png`,  descricao: 'Modelo clássico de câmera em prata.' },
   { id: 12, mongoId: '6a20b216ac6b2f17f3741848', nome: 'Separador de Coração',   preco: 250.90, tipo: 'prata',   imagem: `${API_URL}/public/products/berloque17.png`,  descricao: 'Separador delicado em prata.' },
   { id: 13, mongoId: '6a20b216ac6b2f17f3741849', nome: 'Borboleta',              preco: 250.90, tipo: 'prata',   imagem: `${API_URL}/public/products/berloque14.png`,  descricao: 'Borboleta em prata 925.' },
-  { id: 14, mongoId: '6a20b216ac6b2f17f374184a', nome: 'Borboleta Dourada',      preco: 250.90, tipo: 'prata',   imagem: `${API_URL}/public/products/berloque6.png`,   descricao: 'Borboleta com acabamento especial.' },
+  { id: 14, mongoId: '6a20b216ac6b2f17f374184a', nome: 'Cadeado',      preco: 250.90, tipo: 'prata',   imagem: `${API_URL}/public/products/berloque6.png`,   descricao: 'Borboleta com acabamento especial.' },
   { id: 15, mongoId: '6a20b216ac6b2f17f374184b', nome: 'Trevo de Quatro Folhas', preco: 250.90, tipo: 'prata',   imagem: `${API_URL}/public/products/berloque7.png`,   descricao: 'Símbolo de sorte em prata.' },
   { id: 16, mongoId: '6a20b216ac6b2f17f374184c', nome: 'Árvore da Vida',         preco: 250.90, tipo: 'prata',   imagem: `${API_URL}/public/products/berloque8.png`,   descricao: 'Árvore da vida em prata 925.' },
   { id: 17, mongoId: '6a20b216ac6b2f17f374184d', nome: 'Flor',                   preco: 180.90, tipo: 'prata',   imagem: `${API_URL}/public/products/berloque19.png`,  descricao: 'Flor delicada em prata.' },
   { id: 18, mongoId: '6a20b216ac6b2f17f374184e', nome: 'Lua',                    preco: 390.90, tipo: 'dourado', imagem: `${API_URL}/public/products/berloque18.png`,  descricao: 'Lua banhada a ouro 18k.' },
   { id: 19, mongoId: '6a20b216ac6b2f17f374184f', nome: 'Coração Dourado',        preco: 280.90, tipo: 'dourado', imagem: `${API_URL}/public/products/berloque16.png`,  descricao: 'Coração em ouro 18k.' },
   { id: 20, mongoId: '6a20b216ac6b2f17f3741850', nome: 'Menina',                 preco: 180.90, tipo: 'dourado', imagem: `${API_URL}/public/products/berloque15.png`,  descricao: 'Pingente menina dourado.' },
-  { id: 21, mongoId: '6a20b216ac6b2f17f3741851', nome: 'Patinha de Pet',         preco: 180.90, tipo: 'prata',   imagem: `${API_URL}/public/products/berloque20.png`,  descricao: 'Patinha em prata 925.' },
+  { id: 21, mongoId: '6a20b216ac6b2f17f3741851', nome: 'Patinha de Pet Prata',         preco: 180.90, tipo: 'prata',   imagem: `${API_URL}/public/products/berloque20.png`,  descricao: 'Patinha em prata 925.' },
   { id: 22, mongoId: '6a20b216ac6b2f17f3741852', nome: 'Patinha de Pet Dourada', preco: 180.90, tipo: 'dourado', imagem: `${API_URL}/public/products/berloque21.png`,  descricao: 'Patinha banhada a ouro.' },
   { id: 23, mongoId: '6a20b216ac6b2f17f3741853', nome: 'Violão Dourado',         preco: 380.90, tipo: 'dourado', imagem: `${API_URL}/public/products/berloque22.png`,  descricao: 'Violão em ouro 18k.' },
   { id: 24, mongoId: '6a20b216ac6b2f17f3741854', nome: 'Violão Prata',           preco: 180.90, tipo: 'prata',   imagem: `${API_URL}/public/products/berloque23.png`,  descricao: 'Violão em prata 925.' },
   { id: 25, mongoId: '6a20b216ac6b2f17f3741855', nome: 'Livro',                  preco: 180.90, tipo: 'dourado', imagem: `${API_URL}/public/products/berloque24.png`,  descricao: 'Livro em ouro 18k.' },
   { id: 26, mongoId: '6a20b216ac6b2f17f3741856', nome: 'Colcheia',               preco: 180.90, tipo: 'prata',   imagem: `${API_URL}/public/products/berloque25.png`,  descricao: 'Nota musical em prata.' },
 ])
+
 /* ── MODAL ── */
 const abrirModal = (p: IPingente) => {
   produtoSelecionado.value = p
@@ -299,15 +298,13 @@ const adicionarCarrinho = async () => {
   const p = produtoSelecionado.value
 
   try {
-    await axios.post(
-      `${API_URL}/api/cart`,
-      { productId: p.mongoId, name: p.nome, price: p.preco, image: p.imagem, quantity: 1 },
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-    showToast(`"${p.nome}" adicionado ao carrinho 🛒`)
+    await addToCartStore({ _id: p.mongoId, name: p.nome, price: p.preco, image: p.imagem })
+    await loadCart()
     fecharModal()
+    showToast(`"${p.nome}" adicionado ao carrinho 🛒`)
   } catch (error: any) {
-    console.error('Erro ao adicionar:', error.response?.data)
+    console.error('Erro ao adicionar:', error)
+    showToast('Erro ao adicionar produto ❌')
   }
 }
 
@@ -320,42 +317,32 @@ const comprarProduto = async () => {
   const p = produtoSelecionado.value
 
   try {
-    await axios.post(
-      `${API_URL}/api/cart`,
-      { productId: p.mongoId, name: p.nome, price: p.preco, image: p.imagem, quantity: 1 },
-      { headers: { Authorization: `Bearer ${token}` } }
-    )
-    localStorage.setItem('checkoutProduto', JSON.stringify(p))
+    await addToCartStore({ _id: p.mongoId, name: p.nome, price: p.preco, image: p.imagem })
+    await loadCart()
     fecharModal()
-    router.push({ name: 'checkout' })
+    router.push({ name: 'Checkout' })
   } catch (error: any) {
-    console.error('Erro ao comprar:', error.response?.data)
+    console.error('Erro ao comprar:', error)
+    showToast('Erro ao processar compra ❌')
   }
 }
 
 /* ── FILTROS ── */
 const pingentesFiltrados = computed(() => {
   let lista = pingentes.value.filter((p) => {
-    const nome = p.nome.toLowerCase()
+    const nome   = p.nome.toLowerCase()
     const buscar = busca.value.toLowerCase()
-    return nome.includes(buscar) &&
-      (materialFiltro.value === '' || p.tipo === materialFiltro.value)
+    return nome.includes(buscar) && (materialFiltro.value === '' || p.tipo === materialFiltro.value)
   })
-
   if (ordenar.value === 'menor') return [...lista].sort((a, b) => a.preco - b.preco)
   if (ordenar.value === 'maior') return [...lista].sort((a, b) => b.preco - a.preco)
-
   return lista
 })
 
-const pingentesDourado = computed(() =>
-  pingentesFiltrados.value.filter(p => p.tipo === 'dourado')
-)
-
-const pingentesPrata = computed(() =>
-  pingentesFiltrados.value.filter(p => p.tipo === 'prata')
-)
+const pingentesDourado = computed(() => pingentesFiltrados.value.filter(p => p.tipo === 'dourado'))
+const pingentesPrata   = computed(() => pingentesFiltrados.value.filter(p => p.tipo === 'prata'))
 </script>
+
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500;600&display=swap');
 

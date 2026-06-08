@@ -5,4 +5,5 @@ export interface IJoia{
     categoria: string
     imagem: string
     material: string
+    mongoid?: string
 }
