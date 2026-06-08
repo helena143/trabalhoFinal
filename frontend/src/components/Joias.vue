@@ -275,7 +275,7 @@ const joias = ref<IJoia[]>([
   { id: 'j-1',   mongoid: '6a2065406e1e4fdb36db6e7d', nome: 'Anel Solitário Diamond',   preco: 2490, categoria: 'Anéis',     material: 'Prata',   imagem: getImg('anel2.png'),       },
   { id: 'j-2',   mongoid: '6a2065406e1e4fdb36db6e7e', nome: 'Anel Riviera',        preco: 1850, categoria: 'Anéis',     material: 'Prata',   imagem: getImg('anel3.png'),      },
   { id: 'j-101', mongoid: '6a2065406e1e4fdb36db6e7f', nome: 'Anel Luxo Diamond Premium', preco: 3100, categoria: 'Anéis',     material: 'Dourado', imagem: getImg('anel4.png'), },
-  { id: 'j-102', mongoid: '6a2065406e1e4fdb36db6e80', nome: 'Anel Ouro Diamante Cravejado',          preco: 2200, categoria: 'Anéis',     material: 'Prata',   imagem: getImg('anel5.png'),      },
+  { id: 'j-102', mongoid: '6a2065406e1e4fdb36db6e80', nome: 'Anel  Diamante Cravejado',          preco: 2200, categoria: 'Anéis',     material: 'Prata',   imagem: getImg('anel5.png'),      },
   { id: 'j-103', mongoid: '6a2065406e1e4fdb36db6e81', nome: 'Anel Ouro Rose',            preco: 4200, categoria: 'Anéis',     material: 'Dourado', imagem: getImg('anel6.png'),       },
 
   { id: 'j-3',   mongoid: '6a2065406e1e4fdb36db6e82', nome: 'Anel Eternity Gold',      preco: 3200, categoria: 'Anéis',     material: 'Prata',   imagem: getImg('anel1.png'),      },
@@ -292,7 +292,7 @@ const joias = ref<IJoia[]>([
   { id: 'j-8',   mongoid: '6a2065406e1e4fdb36db6e8b', nome: 'Pulseira Diamond Dourada',         preco: 1450, categoria: 'Pulseiras', material: 'Dourado', imagem: getImg('pulseira5.png'),   },
   { id: 'j-401', mongoid: '6a2065406e1e4fdb36db6e8c', nome: 'Pulseira Riviera Premium',        preco: 2800, categoria: 'Pulseiras', material: 'Prata',   imagem: getImg('pulseira12.png'),  },
   { id: 'j-402', mongoid: '6a2065406e1e4fdb36db6e8d', nome: 'Pulseira Diamond',        preco: 459, categoria: 'Pulseiras', material: 'Prata',   imagem: getImg('pulseira4.png'),   },
-  { id: 'j-403', mongoid: '6a2065406e1e4fdb36db6e8e', nome: 'Anel Coração Diamante',         preco: 3600, categoria: 'Anéis',     material: 'Prata',   imagem: getImg('coraçao.png'),     }
+  { id: 'j-403', mongoid: '6a2065406e1e4fdb36db6e8e', nome: 'Anel Coração Diamante',         preco: 3600, categoria: 'Anéis',     material: 'Prata',   imagem: getImg('coracao2.png'),     }
 ])
 
 const categorias = computed<string[]>(() =>
@@ -356,8 +356,13 @@ const handleAddToCart = async () => {
   const token = localStorage.getItem('token')
   if (!token) { router.push('/login'); return }
   const p = produtoSelecionado.value
-  try {
-    await addToCartDirect({ productid: p.mongoid, name: p.nome, price: p.preco, image: p.imagem })
+  try {await addToCartDirect({
+  productId: p.mongoid,
+  name: p.nome,
+  price: p.preco,
+  image: p.imagem
+  
+})
     fecharModal()
     const toast = document.createElement('div')
     toast.textContent = `"${p.nome}" adicionado ao carrinho 🛒`

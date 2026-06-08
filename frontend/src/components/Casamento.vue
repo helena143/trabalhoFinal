@@ -298,11 +298,20 @@ const produtos = ref([
   { id: 'noiva-1', mongoId: '6a20a97cac6b2f17f3741832', nome: 'Brinco Pérola Royale',preco: 1290, categoria: 'noiva', imagem: `${API_URL}/public/products/brinconoiva.png`, avaliacoes: 53, temNumeracao: false, descricao: 'Design refinado com pérolas naturais e ouro 18k.' },
   { id: 'noiva-2', mongoId: '6a20a97cac6b2f17f3741833', nome: 'Brinco Prata',       preco: 2190, categoria: 'noiva', imagem: `${API_URL}/public/products/noiva.png`,       avaliacoes: 44, temNumeracao: false, descricao: 'Colar delicado em ouro 18k com pingente de diamante.' },
   { id: 'noiva-3', mongoId: '6a20a97cac6b2f17f3741834', nome: 'Brinco Dourado',    preco: 980,  categoria: 'noiva', imagem: `${API_URL}/public/products/noivad.png`,      avaliacoes: 37, temNumeracao: false, descricao: 'Pulseira em ouro 18k com detalhes em zircônia.' },
-  { id: 'noiva-4', mongoId: 'S6a20a97cac6b2f17f3741835', nome: 'Conjunto Nupcial',    preco: 3490, categoria: 'noiva', imagem: `${API_URL}/public/products/noivado.png`,     avaliacoes: 61, temNumeracao: false, descricao: 'Conjunto completo de brinco, colar e pulseira em ouro 18k.' },
-  // NOIVO
-  { id: 'noivo-1', mongoId: '6a20a97cac6b2f17f3741836', nome: 'Abotoadura Elegance', preco: 890,  categoria: 'noivo', imagem: `${API_URL}/public/products/noivo.png`,    avaliacoes: 44, temNumeracao: false, descricao: 'Acessório masculino sofisticado com acabamento premium.' },
-  { id: 'noivo-2', mongoId: '6a20a97cac6b2f17f3741837', nome: 'Corrente Premium',    preco: 1290, categoria: 'noivo', imagem: `${API_URL}/public/products/corrente.png`, avaliacoes: 58, temNumeracao: false, descricao: 'Corrente sofisticada em ouro 18k com design moderno.' },
-  { id: 'noivo-3', mongoId: '6a20a97cac6b2f17f3741838', nome: 'Aliança Masculina',   preco: 1890, categoria: 'noivo', imagem: `${API_URL}/public/products/homen.png`,    avaliacoes: 49, temNumeracao: true,  descricao: 'Aliança masculina de design robusto em ouro 18k.' },
+  {
+  id: 'noiva-4',
+  mongoId: '6a20a97cac6b2f17f3741835',
+  nome: 'Brinco Cravejado',
+  preco: 3490,
+  categoria: 'noiva',
+  imagem: `${API_URL}/public/products/noivado.png`,
+  avaliacoes: 61,
+  temNumeracao: false,
+  descricao: 'Conjunto completo de brinco, colar e pulseira em ouro 18k.'
+},
+  { id: 'noivo-1', mongoId: '6a20a97cac6b2f17f3741836', nome: 'Corrente Prata e Dourada', preco: 890,  categoria: 'noivo', imagem: `${API_URL}/public/products/noivo.png`,    avaliacoes: 44, temNumeracao: false, descricao: 'Acessório masculino sofisticado com acabamento premium.' },
+  { id: 'noivo-2', mongoId: '6a20a97cac6b2f17f3741837', nome: 'Corrente Dourada',    preco: 1290, categoria: 'noivo', imagem: `${API_URL}/public/products/corrente.png`, avaliacoes: 58, temNumeracao: false, descricao: 'Corrente sofisticada em ouro 18k com design moderno.' },
+  { id: 'noivo-3', mongoId: '6a20a97cac6b2f17f3741838', nome: 'Corrente Prata',   preco: 1890, categoria: 'noivo', imagem: `${API_URL}/public/products/homen.png`,    avaliacoes: 49, temNumeracao: true,  descricao: 'Aliança masculina de design robusto em ouro 18k.' },
   { id: 'noivo-4', mongoId: '6a20a97cac6b2f17f3741839', nome: 'Cruz Veneziana',      preco: 1490, categoria: 'noivo', imagem: `${API_URL}/public/products/cruz.png`,     avaliacoes: 33, temNumeracao: false, descricao: 'Cruz veneziana em ouro 18k com acabamento polido.' },
 ])
 

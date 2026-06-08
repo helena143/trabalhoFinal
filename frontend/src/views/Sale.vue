@@ -51,7 +51,7 @@
 </template>
 
 <script setup>
-//import banner from "../img/banner-sale.png"
+
 import perfume from "../img/perfumeP.png"
 import colar from "../img/colarP.png"
 

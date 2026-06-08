@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Logs
 logs
 *.log
@@ -37,3 +38,6 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+=======
+node_modules/
+>>>>>>> 0fb9ac9995b34556c8adbfce6f75ab133f267dba
