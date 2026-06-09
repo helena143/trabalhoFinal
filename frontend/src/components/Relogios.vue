@@ -281,14 +281,14 @@ const produtos = [
   { id: 'rel-2', mongoId: '6a2084bd6e1e4fdb36db6eab', nome: 'Relógio Prata Clássico',   preco: 599,  imagem: getImg('relogio7.png'),  categoria: 'Feminino',  cor: 'Prata'   },
   { id: 'rel-3', mongoId: '6a2084bd6e1e4fdb36db6eac', nome: 'Relógio Masculino',        preco: 799,  imagem: getImg('relogio8.png'),  categoria: 'Masculino', cor: 'Prata'   },
   { id: 'rel-4', mongoId: '6a2084bd6e1e4fdb36db6ead', nome: 'Relógio Diary',      preco: 499,  imagem: getImg('relogio5.png'),  categoria: 'Feminino',  cor: 'Prata'   },
-  { id: 'rel-5', mongoId: '6a2084bd6e1e4fdb36db6eae', nome: 'Relógio Luxo Black',       preco: 1299, imagem: getImg('relogio6.png'),  categoria: 'Masculino', cor: 'Dourado' },
+  { id: 'rel-5', mongoId: '6a2084bd6e1e4fdb36db6eae', nome: 'Relógio Luxo Black',       preco: 1299, imagem: getImg('relogio6.png'),  categoria: 'Masculino', cor: 'Prata' },
   { id: 'rel-6', mongoId: '6a2084bd6e1e4fdb36db6eaf', nome: 'Relógio Star',    preco: 1299, imagem: getImg('relogio9.png'),  categoria: 'Masculino', cor: 'Prata'   },
   { id: 'rel-7', mongoId: '6a2084bd6e1e4fdb36db6eb0', nome: 'Relógio New Black III',   preco: 1299, imagem: getImg('relogio10.png'), categoria: 'Masculino', cor: 'Prata'   },
   { id: 'rel-8', mongoId: '6a2084bd6e1e4fdb36db6eb1', nome: 'Relógio III',              preco: 1299, imagem: getImg('relogio11.png'), categoria: 'Luxo',      cor: 'Prata'   },
   { id: 'rel-9', mongoId: '6a2084bd6e1e4fdb36db6eb2', nome: 'Relógio Luxo  IV',    preco: 1299, imagem: getImg('masculino.png'), categoria: 'Luxo',      cor: 'Prata'   },
   { id: 'rel-10',mongoId: '6a2084bd6e1e4fdb36db6eb3', nome: 'Relógio Boss',preco: 799,  imagem: getImg('relogio14.png'), categoria: 'Luxo',      cor: 'Prata'   },
   { id: 'rel-11',mongoId: '6a2084bd6e1e4fdb36db6eb4', nome: 'Relógio Rose',         preco: 799,  imagem: getImg('relogio15.png'), categoria: 'Feminino',      cor: 'Prata'   },
-  { id: 'rel-12',mongoId: '6a2084bd6e1e4fdb36db6eb5', nome: 'Relógio Luxo Gold',             preco: 799,  imagem: getImg('relogio16.png'), categoria: 'Feminino',      cor: 'Prata'   },
+  { id: 'rel-12',mongoId: '6a2084bd6e1e4fdb36db6eb5', nome: 'Relógio Luxo Gold',             preco: 799,  imagem: getImg('relogio16.png'), categoria: 'Feminino',      cor: 'Dourado'   },
 ]
 /* ── ZOOM VIVARA ── */
 const moverZoom = (e) => {

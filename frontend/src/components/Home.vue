@@ -147,13 +147,11 @@
             <h3 class="card-name">{{ product.name }}</h3>
             <p class="card-desc">{{ product.description }}</p>
 
-            <!-- Rating -->
             <div class="card-rating">
               <span v-for="s in 5" :key="s" class="star" :class="{ filled: s <= product.stars }">★</span>
               <span class="rating-count">({{ product.reviews }})</span>
             </div>
 
-            <!-- Tags de material -->
             <div class="card-tags">
               <span v-for="tag in product.tags" :key="tag" class="card-tag">{{ tag }}</span>
             </div>
@@ -236,6 +234,7 @@
 
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue"
+import { addToCart as storeAddToCart } from "@/stores/cart"
 import { useRouter } from "vue-router"
 
 const router = useRouter()
@@ -256,10 +255,10 @@ const benefits = [
 ]
 
 const bestSellers = ref([
-  { id: 1, name: "Anel Imperial Gold",  price: 2490, description: "Lapidação brilhante com banho reforçado de ouro 18k.", image: "http://localhost:3000/public/products/anel1.png" },
-  { id: 2, name: "Relógio III",          price: 1299, description: "Zircônias selecionadas com cravação artesanal impecável.", image: "http://localhost:3000/public/products/relogio11.png" },
-  { id: 3, name: "Pulseira Diamond",     price: 459,  description: "Delicada e minimalista, o acessório ideal para o seu dia a dia.", image: "http://localhost:3000/public/products/pulseira4.png" },
-  { id: 4, name: "Anel Coração Diamante", price: 3600,  description: "Sofisticação marcante com pedraria em tom profundo e acabamento polido.", image: "http://localhost:3000/public/products/coraçao.png" },
+  { id: 1, name: "Anel Imperial Gold",    price: 2490, description: "Lapidação brilhante com banho reforçado de ouro 18k.", image: "http://localhost:3000/public/products/anel1.png" },
+  { id: 2, name: "Relógio III",            price: 1299, description: "Zircônias selecionadas com cravação artesanal impecável.", image: "http://localhost:3000/public/products/relogio11.png" },
+  { id: 3, name: "Pulseira Diamond",       price: 459,  description: "Delicada e minimalista, o acessório ideal para o seu dia a dia.", image: "http://localhost:3000/public/products/pulseira4.png" },
+  { id: 4, name: "Anel Coração Diamante",  price: 3600, description: "Sofisticação marcante com pedraria em tom profundo e acabamento polido.", image: "http://localhost:3000/public/products/coracao2.png" },
 ])
 
 const valentinesCollection = ref([
@@ -298,10 +297,10 @@ const valentinesCollection = ref([
 ])
 
 const categories = [
-  { title: "Anéis Premium",       image: "http://localhost:3000/public/products/anel2.png",       route: "/joias" },
-  { title: "Colares Autoriais",   image: "http://localhost:3000/public/products/rubi.png",         route: "/joias" },
-  { title: "Pulseiras Exclusivas",image: "http://localhost:3000/public/products/pulseira12.png",   route: "/joias" },
-  { title: "Brincos Finos",       image: "http://localhost:3000/public/products/brinco2.png",      route: "/joias" },
+  { title: "Anéis Premium",        image: "http://localhost:3000/public/products/anel2.png",      route: "/joias" },
+  { title: "Colares Autoriais",    image: "http://localhost:3000/public/products/rubi.png",        route: "/joias" },
+  { title: "Pulseiras Exclusivas", image: "http://localhost:3000/public/products/pulseira12.png",  route: "/joias" },
+  { title: "Brincos Finos",        image: "http://localhost:3000/public/products/brinco2.png",     route: "/joias" },
 ]
 
 const targetDate = new Date("2026-06-12T23:59:59").getTime()
@@ -324,15 +323,34 @@ const selectedProduct = ref(null)
 const openModal  = (p) => { selectedProduct.value = p; document.body.style.overflow = "hidden" }
 const closeModal = ()  => { selectedProduct.value = null; document.body.style.overflow = "" }
 
-const cart = ref(JSON.parse(localStorage.getItem("ivy_cart") || "[]"))
+
 const addToCart = (product) => {
-  const existing = cart.value.find(item => item.id === product.id)
-  if (existing) existing.quantity++
-  else cart.value.push({ ...product, quantity: 1 })
-  localStorage.setItem("ivy_cart", JSON.stringify(cart.value))
-  showToast(`${product.name} foi adicionado à sua sacola.`)
+  const user = localStorage.getItem("user")
+
+  if (!user) {
+    showToast("Faça login para adicionar produtos à sacola.", "error")
+    router.push("/login")
+    return
+  }
+
+  storeAddToCart(product)
+  closeModal()
+  router.push("/carrinho")
 }
-const buyNow = (product) => { addToCart(product); closeModal(); router.push("/checkout") }
+
+const buyNow = (product) => {
+  const user = localStorage.getItem("user")
+
+  if (!user) {
+    showToast("Faça login para continuar.", "error")
+    router.push("/login")
+    return
+  }
+
+  storeAddToCart(product)
+  closeModal()
+  router.push("/checkout")
+}
 
 const toast = ref({ show: false, message: "", type: "success" })
 let toastTimer = null
@@ -361,52 +379,25 @@ onUnmounted(() => { clearInterval(countdownTimer); clearTimeout(toastTimer); obs
 </script>
 
 <style scoped>
-/* ★ FONTE DE LUXO: Playfair Display para o hero ★ */
-@import url('https://fonts.googleapis.com/css2?family=Forum&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Forum&family=Cormorant+Garamond:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap');
 
-.home {
-  font-family: "Inter", sans-serif;
-  background: #fcfbfa;
-  color: #1a1a1a;
-  overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-}
+.home { font-family: "Inter", sans-serif; background: #fcfbfa; color: #1a1a1a; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
 
 [data-reveal] { opacity: 0; transform: translateY(30px); transition: opacity 1.2s cubic-bezier(0.16, 1, 0.3, 1), transform 1.2s cubic-bezier(0.16, 1, 0.3, 1); }
 [data-reveal].is-visible { opacity: 1; transform: translateY(0); }
 
-/* ── HERO ── */
 .hero-grid { display: grid; grid-template-columns: 0.9fr 1.5fr 0.9fr; height: 90vh; background: #111; }
 .hero-item { position: relative; overflow: hidden; height: 100%; }
 .hero-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.5s cubic-bezier(0.16, 1, 0.3, 1); filter: brightness(0.9); }
 .hero-item:hover img { transform: scale(1.03); }
 @media (max-width: 960px) { .hero-grid { grid-template-columns: 1fr; } .hero-item.side { display: none; } }
 
-.overlay {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center; padding: 40px;
-  background: linear-gradient(to top, rgba(17,17,17,0.85) 15%, rgba(17,17,17,0.3) 100%);
-}
+.overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 40px; background: linear-gradient(to top, rgba(17,17,17,0.85) 15%, rgba(17,17,17,0.3) 100%); }
 .content { max-width: 580px; text-align: center; color: #ffffff; }
 
-.tag {
-  display: inline-block; padding: 6px 16px;
-  border: 1px solid rgba(212,175,55,0.5);
-  font-size: 9px; font-weight: 600; letter-spacing: 4px; text-transform: uppercase;
-  color: #d4af37; margin-bottom: 24px;
-}
+.tag { display: inline-block; padding: 6px 16px; border: 1px solid rgba(212,175,55,0.5); font-size: 9px; font-weight: 600; letter-spacing: 4px; text-transform: uppercase; color: #d4af37; margin-bottom: 24px; }
 
-/* ★ HERO H1 — Playfair Display itálico ★ */
-.content h1 {
-    font-family: "Forum", serif;
-    font-size: clamp(50px, 6vw, 90px);
-    font-weight: 400;
-    line-height: 1;
-    letter-spacing: -1px;
-  margin-bottom: 20px;
-  color: #fff;
-  text-shadow: 0 4px 40px rgba(0,0,0,0.35);
-}
+.content h1 { font-family: "Forum", serif; font-size: clamp(50px, 6vw, 90px); font-weight: 400; line-height: 1; letter-spacing: -1px; margin-bottom: 20px; color: #fff; text-shadow: 0 4px 40px rgba(0,0,0,0.35); }
 
 .content p { font-size: 15px; font-weight: 300; line-height: 1.8; opacity: 0.85; margin-bottom: 35px; color: #f5f5f5; }
 
@@ -416,7 +407,6 @@ onUnmounted(() => { clearInterval(countdownTimer); clearTimeout(toastTimer); obs
 .btn-hero.ghost { background: transparent; border: 1px solid #ffffff; color: #ffffff; }
 .btn-hero.ghost:hover { background: #ffffff; color: #111111; }
 
-/* ── BENEFÍCIOS ── */
 .benefits-section { background: #ffffff; border-bottom: 1px solid #eeeae6; }
 .benefits { max-width: 1400px; margin: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); padding: 40px 24px; gap: 30px; }
 .benefit { display: flex; align-items: center; gap: 16px; }
@@ -425,12 +415,10 @@ onUnmounted(() => { clearInterval(countdownTimer); clearTimeout(toastTimer); obs
 .b-title { font-size: 13px; font-weight: 600; color: #111; letter-spacing: 0.5px; }
 .b-sub { font-size: 11px; color: #777; margin-top: 3px; font-weight: 300; }
 
-/* ── SECTION HEADER ── */
 .section-header { text-align: center; margin-bottom: 60px; padding: 0 20px; }
 .section-header p { color: #d4af37; font-size: 11px; font-weight: 600; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 12px; }
 .section-header h2 { font-family: "Cormorant Garamond", serif; font-size: clamp(32px, 3.5vw, 46px); font-weight: 300; color: #111; }
 
-/* ── CATEGORIAS ── */
 .categories-section { padding: 90px 6% 40px; max-width: 1600px; margin: 0 auto; }
 .categories-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; }
 .category-card { position: relative; height: 320px; overflow: hidden; cursor: pointer; background: #f0ece6; }
@@ -440,7 +428,6 @@ onUnmounted(() => { clearInterval(countdownTimer); clearTimeout(toastTimer); obs
 .category-card:hover img { transform: scale(1.05); }
 .category-card:hover .category-overlay { background: linear-gradient(to top, rgba(181,148,43,0.6) 0%, transparent 100%); }
 
-/* ── MAIS VENDIDOS ── */
 .best-sellers { padding: 80px 6%; max-width: 1600px; margin: 0 auto; }
 .best-layout { display: grid; grid-template-columns: 1.3fr 1fr; gap: 30px; }
 @media (max-width: 1024px) { .best-layout { grid-template-columns: 1fr; } }
@@ -475,7 +462,6 @@ onUnmounted(() => { clearInterval(countdownTimer); clearTimeout(toastTimer); obs
 .mini-product:hover { transform: translateX(6px); border-color: #d4af37; }
 .mini-product:hover .mini-img img { transform: scale(1.05); }
 
-/* ── COUNTDOWN ── */
 .countdown-section { position: relative; min-height: 480px; display: flex; align-items: center; justify-content: center; background: #111; }
 .countdown-bg { position: absolute; inset: 0; background-size: cover; background-position: center; filter: brightness(0.4) grayscale(20%); }
 .countdown-overlay { position: absolute; inset: 0; background: linear-gradient(to bottom, rgba(17,17,17,0.4), rgba(17,17,17,0.8)); }
@@ -490,45 +476,32 @@ onUnmounted(() => { clearInterval(countdownTimer); clearTimeout(toastTimer); obs
 .btn-gold { height: 50px; padding: 0 32px; background: #ffffff; color: #111; border: none; font-size: 11px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.4s; }
 .btn-gold:hover { background: #d4af37; color: #fff; transform: translateY(-2px); }
 
-/* ── CARDS NAMORADOS (ENRIQUECIDOS) ── */
 .products { padding: 90px 6%; max-width: 1600px; margin: 0 auto; }
 .grid { display: grid; gap: 24px; }
 .grid-4 { grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); }
 
-.ivy-card {
-  background: #ffffff; border: 1px solid #eeeae6;
-  position: relative; display: flex; flex-direction: column;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
+.ivy-card { background: #ffffff; border: 1px solid #eeeae6; position: relative; display: flex; flex-direction: column; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
 .ivy-card:hover { transform: translateY(-6px); border-color: #d4af37; box-shadow: 0 16px 40px rgba(181,148,43,0.08); }
 
 .card-img-wrap { position: relative; height: 280px; overflow: hidden; background: #faf8f5; }
 .card-img-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s; }
 .ivy-card:hover .card-img-wrap img { transform: scale(1.04); }
 
-.card-quick-view {
-  position: absolute; bottom: 0; left: 0; right: 0;
-  background: rgba(17,17,17,0.82); color: #fff; text-align: center;
-  padding: 12px; font-size: 9px; font-weight: 600; letter-spacing: 3px;
-  transform: translateY(100%); transition: transform 0.35s;
-}
+.card-quick-view { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(17,17,17,0.82); color: #fff; text-align: center; padding: 12px; font-size: 9px; font-weight: 600; letter-spacing: 3px; transform: translateY(100%); transition: transform 0.35s; }
 .ivy-card:hover .card-quick-view { transform: translateY(0); }
 
 .card-badge { position: absolute; top: 14px; left: 14px; background: #111; color: #fff; font-size: 8px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; padding: 4px 10px; }
 
 .card-body { padding: 20px 20px 10px; flex: 1; display: flex; flex-direction: column; gap: 8px; }
-
 .card-cat { font-size: 9px; color: #b5942b; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; }
 .card-name { font-family: "Cormorant Garamond", serif; font-size: 22px; font-weight: 400; color: #111; margin: 0; line-height: 1.2; }
 .card-desc { font-size: 12px; color: #777; line-height: 1.7; font-weight: 300; }
 
-/* Rating */
 .card-rating { display: flex; align-items: center; gap: 2px; }
 .star { font-size: 13px; color: #ddd; line-height: 1; }
 .star.filled { color: #d4af37; }
 .rating-count { font-size: 11px; color: #aaa; margin-left: 5px; }
 
-/* Tags */
 .card-tags { display: flex; flex-wrap: wrap; gap: 5px; }
 .card-tag { font-size: 10px; color: #666; background: #f7f5f1; border: 1px solid #ece9e2; padding: 3px 8px; }
 
@@ -538,7 +511,6 @@ onUnmounted(() => { clearInterval(countdownTimer); clearTimeout(toastTimer); obs
 .card-pix { font-size: 10px; background: rgba(34,197,94,0.08); color: #16a34a; border: 1px solid rgba(34,197,94,0.2); padding: 4px 8px; font-weight: 500; white-space: nowrap; align-self: flex-end; }
 
 .card-divider { border: none; border-top: 1px solid #f5f3f0; margin: 0; }
-
 .card-footer { padding: 12px 20px 18px; display: flex; flex-direction: column; gap: 6px; }
 .card-btn-group { display: flex; gap: 8px; }
 
@@ -550,7 +522,6 @@ onUnmounted(() => { clearInterval(countdownTimer); clearTimeout(toastTimer); obs
 
 .card-frete { font-size: 10px; color: #aaa; text-align: center; }
 
-/* ── MODAL ── */
 .modal { position: fixed; inset: 0; background: rgba(17,17,17,0.6); backdrop-filter: blur(8px); z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; }
 .modal-box { background: #ffffff; width: 100%; max-width: 900px; position: relative; animation: modal-show 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
 @keyframes modal-show { from { opacity: 0; transform: scale(0.96) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
@@ -574,7 +545,6 @@ onUnmounted(() => { clearInterval(countdownTimer); clearTimeout(toastTimer); obs
 .btn-add-modal { height: 48px; border: 1px solid #eeeae6; background: transparent; color: #111; font-size: 10px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; transition: all 0.3s; }
 .btn-add-modal:hover { background: #111; color: #fff; border-color: #111; }
 
-/* ── TOAST ── */
 .toast-notification { position: fixed; bottom: 30px; right: 30px; background: #111; color: #fff; padding: 16px 24px; z-index: 110; box-shadow: 0 20px 40px rgba(0,0,0,0.15); border-left: 3px solid #d4af37; }
 .toast-content { display: flex; align-items: center; gap: 12px; font-size: 12px; font-weight: 500; letter-spacing: 0.5px; }
 .toast-content svg { color: #d4af37; flex-shrink: 0; }

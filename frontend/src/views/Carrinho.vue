@@ -182,7 +182,7 @@
 
         <button
           class="btn-confirm"
-          @click="confirmClearCart"
+          @click="handleClearCart"
         >
           Sim, remover tudo
         </button>
@@ -197,29 +197,21 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { useRouter } from 'vue-router'
-import {
-  X,
-  ShoppingBag,
-  Truck,
-  Loader2,
-  Trash2,
-  AlertTriangle
-} from 'lucide-vue-next'
 import { cart, getTotal } from '@/stores/cart'
 
 const router = useRouter()
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
 
 // ── STATES ──
-const loading         = ref(false)
-const clearLoading    = ref(false)
-const zipCode         = ref('')
-const shippingValue   = ref(0)
+const loading = ref(false)
+const clearLoading = ref(false)
+const zipCode = ref('')
+const shippingValue = ref(0)
 const shippingLoading = ref(false)
-const couponInput     = ref('')
-const discount        = ref(0)
+const couponInput = ref('')
+const discount = ref(0)
 const checkoutLoading = ref(false)
-const errorMsg        = ref('')
+const errorMsg = ref('')
 const showClearModal = ref(false)
 
 // ── CUPONS ──
@@ -231,14 +223,17 @@ const CUPONS: Record<string, number> = {
 // ── AUTH ──
 const getAuthHeader = () => {
   const token = localStorage.getItem('token')
-  if (!token) { router.push('/login'); return null }
+  if (!token) {
+    router.push('/login')
+    return null
+  }
   return { Authorization: `Bearer ${token}` }
 }
 
 // ── IMAGEM ──
-const getImageUrl = (image: string | undefined | null): string => {
+const getImageUrl = (image?: string | null): string => {
   if (!image || image === 'undefined' || image === 'null') return ''
-  if (image.startsWith('http://') || image.startsWith('https://')) return image
+  if (image.startsWith('http')) return image
   const clean = image.startsWith('/') ? image : `/public/products/${image}`
   return `${apiUrl}${clean}`
 }
@@ -249,36 +244,36 @@ const onImgError = (e: Event) => {
 }
 
 const maskCep = () => {
-  let v = zipCode.value.replace(/\D/g, '').substring(0, 8)
+  let v = zipCode.value.replace(/\D/g, '').slice(0, 8)
   if (v.length > 5) v = v.slice(0, 5) + '-' + v.slice(5)
   zipCode.value = v
 }
 
 // ── COMPUTED ──
 const amountToFreeShipping = computed(() => Math.max(0, 1500 - getTotal()))
-const finalTotal = computed(() => Math.max(0, getTotal() + shippingValue.value - discount.value))
+const finalTotal = computed(() =>
+  Math.max(0, getTotal() + shippingValue.value - discount.value)
+)
 
-// ── NORMALIZA ITEM ──
+// ── NORMALIZA ITEM (CORRIGIDO) ──
 const normalizeItem = (raw: any) => {
-  const p = (raw?.product && typeof raw.product === 'object') ? raw.product
-          : (raw?.productId && typeof raw.productId === 'object') ? raw.productId
-          : raw
+  const p =
+    raw?.product && typeof raw.product === 'object'
+      ? raw.product
+      : raw?.productId && typeof raw.productId === 'object'
+        ? raw.productId
+        : raw
 
-  const _id = String(
-    p?._id ?? p?.id ??
-    raw?._id ??
-    (typeof raw?.productId === 'string' ? raw.productId : '') ??
-    (typeof raw?.product === 'string' ? raw.product : '') ??
-    ''
-  )
+  const _id = String(p?._id ?? raw?._id ?? raw?.productId ?? '')
 
-  const name     = String(p?.name  ?? p?.title ?? raw?.name  ?? raw?.title ?? 'Produto')
-  const price    = Number(p?.price ?? raw?.price ?? 0)
-  const image    = String(p?.image ?? p?.foto ?? p?.thumbnail ?? p?.img ??
-                          raw?.image ?? raw?.foto ?? raw?.thumbnail ?? raw?.img ?? '')
-  const quantity = Number(raw?.quantity ?? raw?.qty ?? raw?.amount ?? 1)
-
-  return { _id, name, price, image, quantity }
+  return {
+    _id,
+    productId: _id, // 🔥 ESSENCIAL para evitar erro TS
+    name: String(p?.name ?? raw?.name ?? 'Produto'),
+    price: Number(p?.price ?? raw?.price ?? 0),
+    image: String(p?.image ?? raw?.image ?? ''),
+    quantity: Number(raw?.quantity ?? 1),
+  }
 }
 
 // ── LOAD CART ──
@@ -293,29 +288,25 @@ const loadCart = async () => {
     const { data } = await axios.get(`${apiUrl}/api/cart`, { headers })
 
     const rawItems: any[] =
-      Array.isArray(data)                ? data            :
-      Array.isArray(data?.items)         ? data.items      :
-      Array.isArray(data?.data?.items)   ? data.data.items :
-      Array.isArray(data?.data)          ? data.data       :
-      Array.isArray(data?.cart?.items)   ? data.cart.items :
-      Array.isArray(data?.result?.items) ? data.result.items :
+      Array.isArray(data) ? data :
+      Array.isArray(data?.items) ? data.items :
+      Array.isArray(data?.data?.items) ? data.data.items :
+      Array.isArray(data?.cart?.items) ? data.cart.items :
       []
 
     cart.items = rawItems
-      .filter((item: any) => item != null)
+      .filter(Boolean)
       .map(normalizeItem)
-      .filter((item) => item._id !== '')
+      .filter(i => i._id)
 
   } catch (err: any) {
     const status = err.response?.status
+
     if (status === 401) {
       localStorage.removeItem('token')
       router.push('/login')
-    } else if (status === 404) {
-      cart.items = []
     } else {
-      errorMsg.value = 'Erro ao carregar o carrinho. Tente novamente.'
-      console.error('[Cart] Erro loadCart:', err.response?.data ?? err.message)
+      errorMsg.value = 'Erro ao carregar carrinho'
     }
   } finally {
     loading.value = false
@@ -325,15 +316,16 @@ const loadCart = async () => {
 onMounted(loadCart)
 
 // ── REMOVER ITEM ──
-const handleRemoveItem = async (productId: string) => {
+const handleRemoveItem = async (id: string) => {
   const headers = getAuthHeader()
   if (!headers) return
-  cart.items = cart.items.filter(i => i._id !== productId)
+
+  cart.items = cart.items.filter(i => i._id !== id)
+
   try {
-    await axios.delete(`${apiUrl}/api/cart/item/${productId}`, { headers })
-  } catch (err: any) {
-    console.error('[Cart] Erro remover:', err.response?.data ?? err.message)
-    errorMsg.value = 'Erro ao remover item.'
+    await axios.delete(`${apiUrl}/api/cart/item/${id}`, { headers })
+  } catch {
+    errorMsg.value = 'Erro ao remover item'
   }
 }
 
@@ -341,70 +333,65 @@ const handleRemoveItem = async (productId: string) => {
 const handleQuantity = async (item: any, change: number) => {
   const headers = getAuthHeader()
   if (!headers) return
+
   const newQty = item.quantity + change
   if (newQty < 1) return
+
   const oldQty = item.quantity
   item.quantity = newQty
+
   try {
-    await axios.put(`${apiUrl}/api/cart/update`, { productId: item._id, quantity: newQty }, { headers })
-  } catch (err: any) {
+    await axios.put(
+      `${apiUrl}/api/cart/update`,
+      { productId: item.productId, quantity: newQty },
+      { headers }
+    )
+  } catch {
     item.quantity = oldQty
-    console.error('[Cart] Erro quantidade:', err.response?.data ?? err.message)
   }
 }
-// ── CONFIRMAR LIMPEZA ──
-const confirmClearCart = async () => {
-  showClearModal.value = false
-  await handleClearCart()
-}
-
 
 // ── LIMPAR CARRINHO ──
 const handleClearCart = async () => {
   const headers = getAuthHeader()
   if (!headers) return
 
-  clearLoading.value = true
-  errorMsg.value = ''
-
   const snapshot = [...cart.items]
   cart.items = []
+  clearLoading.value = true
 
   try {
     await axios.delete(`${apiUrl}/api/cart/clear`, { headers })
-  } catch (err: any) {
-    const status = err.response?.status
-
-    if (status === 404 || status === 405) {
-      try {
-        await Promise.all(
-          snapshot.map(i =>
-            axios.delete(`${apiUrl}/api/cart/item/${i._id}`, { headers })
-          )
-        )
-      } catch {
-        cart.items = snapshot
-        errorMsg.value = 'Erro ao limpar a sacola.'
-      }
-    } else {
-      cart.items = snapshot
-      errorMsg.value = 'Erro ao limpar a sacola.'
-    }
+  } catch {
+    cart.items = snapshot
   } finally {
     clearLoading.value = false
   }
 }
-// ── CALCULAR FRETE ──
+
+// ✔ FUNÇÃO QUE ESTAVA FALTANDO
+const confirmClearCart = async () => {
+  showClearModal.value = false
+  await handleClearCart()
+}
+
+// ── FRETE ──
 const handleShipping = async () => {
   const clean = zipCode.value.replace(/\D/g, '')
-  if (clean.length < 8) { errorMsg.value = 'CEP inválido'; return }
+  if (clean.length < 8) {
+    errorMsg.value = 'CEP inválido'
+    return
+  }
 
   shippingLoading.value = true
-  errorMsg.value = ''
 
   try {
     const { data } = await axios.get(`https://viacep.com.br/ws/${clean}/json/`)
-    if (data.erro) { errorMsg.value = 'CEP não encontrado'; return }
+
+    if (data.erro) {
+      errorMsg.value = 'CEP não encontrado'
+      return
+    }
 
     const total = getTotal()
 
@@ -413,19 +400,7 @@ const handleShipping = async () => {
       return
     }
 
-    // Tabela por UF (mesma do header)
-    const tabela: Record<string, number> = {
-      SP: 12.90, MG: 11.90, RJ: 14.90, ES: 13.90,
-      PR: 15.90, SC: 16.90, RS: 18.90, BA: 21.90,
-      PE: 22.90, CE: 24.90, GO: 19.90, DF: 17.90,
-      MT: 23.90, MS: 22.90, AM: 34.90, PA: 32.90,
-      MA: 28.90, PI: 27.90, RN: 26.90, PB: 25.90,
-      AL: 24.90, SE: 23.90, TO: 26.90, AC: 38.90,
-      RO: 36.90, RR: 39.90, AP: 37.90,
-    }
-
-    shippingValue.value = tabela[data.uf] ?? 29.90
-
+    shippingValue.value = 20
   } catch {
     errorMsg.value = 'Erro ao calcular frete'
   } finally {
@@ -436,27 +411,24 @@ const handleShipping = async () => {
 // ── CUPOM ──
 const applyCoupon = () => {
   const code = couponInput.value.trim().toUpperCase()
-  if (!CUPONS[code]) { errorMsg.value = 'Cupom inválido'; return }
+
+  if (!CUPONS[code]) {
+    errorMsg.value = 'Cupom inválido'
+    return
+  }
+
   discount.value = getTotal() * CUPONS[code]
   errorMsg.value = ''
 }
 
-
-
-// ── FINALIZAR PEDIDO ──
+// ── FINALIZAR ──
 const handleFinalize = async () => {
-  const headers = getAuthHeader()
-  if (!headers) return
-  if (cart.items.length === 0) { errorMsg.value = 'Carrinho vazio'; return }
-  checkoutLoading.value = true
-  errorMsg.value = ''
-  try {
-    router.push('/Checkout')
-  } catch (err: any) {
-    errorMsg.value = err.response?.data?.message || 'Erro ao finalizar pedido. Tente novamente.'
-  } finally {
-    checkoutLoading.value = false
+  if (!cart.items.length) {
+    errorMsg.value = 'Carrinho vazio'
+    return
   }
+
+  router.push('/Checkout')
 }
 </script>
 
