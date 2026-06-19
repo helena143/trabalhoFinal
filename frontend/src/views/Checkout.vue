@@ -78,6 +78,63 @@
                 <div class="field-line"></div>
               </div>
             </div>
+
+            <!-- CÁLCULO DE FRETE -->
+            <div class="frete-section">
+              <div class="frete-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="16" height="16">
+                  <path d="M5 17H3a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v3"/>
+                  <rect x="9" y="11" width="14" height="10" rx="2"/>
+                  <circle cx="12" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                </svg>
+                <span>Calcular Frete</span>
+              </div>
+              <div class="frete-input-row">
+                <div class="frete-input-wrap">
+                  <input
+                    v-model="freteCep"
+                    @input="formatFreteCEP"
+                    placeholder="00000-000"
+                    maxlength="9"
+                    class="frete-input"
+                    :disabled="freteLoading"
+                  />
+                </div>
+                <button class="btn-calcular-frete" @click="calcularFrete" :disabled="freteLoading || freteCep.replace(/\D/g,'').length < 8">
+                  <span v-if="!freteLoading">Calcular</span>
+                  <span v-else class="loader-sm"></span>
+                </button>
+              </div>
+
+              <Transition name="frete-results">
+                <div v-if="freteOptions.length" class="frete-options">
+                  <div
+                    v-for="opt in freteOptions"
+                    :key="opt.id"
+                    :class="['frete-option', { selected: freteSelected === opt.id }]"
+                    @click="freteSelected = opt.id"
+                  >
+                    <span class="frete-radio"><span class="frete-radio-dot"></span></span>
+                    <div class="frete-info">
+                      <span class="frete-nome">{{ opt.nome }}</span>
+                      <span class="frete-prazo">{{ opt.prazo }}</span>
+                    </div>
+                    <span :class="['frete-price', { gratis: opt.gratis }]">
+                      {{ opt.gratis ? 'Grátis' : formatPrice(opt.valor) }}
+                    </span>
+                  </div>
+                </div>
+              </Transition>
+
+              <Transition name="frete-results">
+                <p v-if="freteErro" class="frete-erro">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>
+                  </svg>
+                  CEP não encontrado. Verifique e tente novamente.
+                </p>
+              </Transition>
+            </div>
           </section>
 
           <!-- PAGAMENTO -->
@@ -98,7 +155,7 @@
                 @click="payment = tab.id"
               >
                 <span class="tab-radio"><span class="tab-radio-dot"></span></span>
-                <span class="tab-icon">{{ tab.icon }}</span>
+                <span class="tab-icon-svg" v-html="tab.svg"></span>
                 <span class="tab-label">{{ tab.label }}</span>
                 <span v-if="tab.badge" class="tab-badge">{{ tab.badge }}</span>
               </button>
@@ -203,7 +260,7 @@
                     <label class="static-label">Parcelas</label>
                     <select v-model="parcelas" class="select-parcelas">
                       <option v-for="n in 12" :key="n" :value="n">
-                        {{ n }}x de {{ formatPrice(total / n) }}{{ n === 1 ? ' (à vista)' : ' sem juros' }}
+                        {{ n }}x de {{ formatPrice(totalComDesconto / n) }}{{ n === 1 ? ' (à vista)' : ' sem juros' }}
                       </option>
                     </select>
                   </div>
@@ -268,22 +325,82 @@
               </div>
             </div>
 
+            <!-- CUPOM -->
+            <div class="cupom-section">
+              <div class="cupom-header">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="14" height="14">
+                  <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/>
+                  <line x1="7" y1="7" x2="7.01" y2="7"/>
+                </svg>
+                <span>Cupom de Desconto</span>
+              </div>
+
+              <div v-if="!cupomAplicado" class="cupom-input-row">
+                <input
+                  v-model="cupomInput"
+                  placeholder="DIGITE SEU CUPOM"
+                  class="cupom-input"
+                  :disabled="cupomLoading"
+                  @keydown.enter="aplicarCupom"
+                  style="text-transform:uppercase"
+                />
+                <button class="btn-cupom" @click="aplicarCupom" :disabled="cupomLoading || !cupomInput.trim()">
+                  <span v-if="!cupomLoading">Aplicar</span>
+                  <span v-else class="loader-sm"></span>
+                </button>
+              </div>
+
+              <Transition name="hint-pop">
+                <div v-if="cupomErro" class="cupom-erro">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12">
+                    <circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/>
+                  </svg>
+                  {{ cupomErro }}
+                </div>
+              </Transition>
+
+              <Transition name="hint-pop">
+                <div v-if="cupomAplicado" class="cupom-aplicado">
+                  <div class="cupom-aplicado-left">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="14" height="14">
+                      <path d="M20 6 9 17l-5-5"/>
+                    </svg>
+                    <div>
+                      <span class="cupom-code">{{ cupomAplicado.code }}</span>
+                      <span class="cupom-desc">{{ cupomAplicado.descricao }}</span>
+                    </div>
+                  </div>
+                  <button class="btn-remover-cupom" @click="removerCupom" title="Remover cupom">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14">
+                      <path d="M18 6 6 18M6 6l12 12"/>
+                    </svg>
+                  </button>
+                </div>
+              </Transition>
+            </div>
+
             <!-- TOTAIS -->
             <div class="totals">
               <div class="total-row">
                 <span>Subtotal</span>
                 <span>{{ formatPrice(total) }}</span>
               </div>
+              <Transition name="hint-pop">
+                <div v-if="cupomAplicado" class="total-row desconto-row">
+                  <span>Desconto ({{ cupomAplicado.code }})</span>
+                  <span class="desconto-val">− {{ formatPrice(valorDesconto) }}</span>
+                </div>
+              </Transition>
               <div class="total-row">
                 <span>Frete</span>
-                <span class="free-tag">Grátis</span>
+                <span :class="freteGratis ? 'free-tag' : ''">{{ freteLabel }}</span>
               </div>
               <div class="total-row grand">
                 <span>Total</span>
-                <span>{{ formatPrice(total) }}</span>
+                <span>{{ formatPrice(totalFinal) }}</span>
               </div>
               <p v-if="payment === 'card' && parcelas > 1" class="parcel-info">
-                {{ parcelas }}x de {{ formatPrice(total / parcelas) }} sem juros
+                {{ parcelas }}x de {{ formatPrice(totalFinal / parcelas) }} sem juros
               </p>
             </div>
 
@@ -347,6 +464,10 @@
               <span>Pagamento</span>
               <strong>{{ paymentLabel }}</strong>
             </div>
+            <div v-if="successSnapshot.desconto > 0" class="detail-row">
+              <span>Desconto</span>
+              <strong class="desconto-val">− {{ formatPrice(successSnapshot.desconto) }}</strong>
+            </div>
             <div class="detail-row">
               <span>Total</span>
               <strong>{{ formatPrice(successSnapshot.total) }}</strong>
@@ -381,11 +502,13 @@ onMounted(async () => {
 const hasItems = computed(() => cart.items.length > 0)
 const total    = computed(() => getTotal())
 
+// ── FORM ──
 const form = reactive({
   name: "", cep: "", address: "", number: "",
   complement: "", city: "", neighborhood: "", state: ""
 })
 
+// ── CARD ──
 const card = reactive({ number: "", name: "", exp: "", cvv: "" })
 const cardFlipped = ref(false)
 const parcelas    = ref(1)
@@ -394,12 +517,173 @@ const loading     = ref(false)
 const success     = ref(false)
 const pixCopiado  = ref(false)
 
+// ── CUPOM ──
+const cupomInput   = ref("")
+const cupomLoading = ref(false)
+const cupomErro    = ref("")
+const cupomAplicado = ref(null)
+
+const CUPONS_VALIDOS = {
+  "IVY10":   { descricao: "10% de desconto",  tipo: "percent", valor: 10 },
+  "IVY20":   { descricao: "20% de desconto",  tipo: "percent", valor: 20 },
+  "FRETE":   { descricao: "Frete grátis",     tipo: "frete",   valor: 0 },
+  "JADE50":  { descricao: "R$ 50 de desconto",tipo: "fixed",   valor: 50 },
+}
+
+const aplicarCupom = async () => {
+  cupomErro.value = ""
+  if (!cupomInput.value.trim()) return
+  cupomLoading.value = true
+  await new Promise(r => setTimeout(r, 700))
+  const code = cupomInput.value.trim().toUpperCase()
+  const cupom = CUPONS_VALIDOS[code]
+  if (cupom) {
+    cupomAplicado.value = { code, ...cupom }
+    cupomInput.value = ""
+  } else {
+    cupomErro.value = "Cupom inválido ou expirado."
+  }
+  cupomLoading.value = false
+}
+
+const removerCupom = () => {
+  cupomAplicado.value = null
+  cupomErro.value = ""
+}
+
+const valorDesconto = computed(() => {
+  if (!cupomAplicado.value) return 0
+  const c = cupomAplicado.value
+  if (c.tipo === "percent") return total.value * (c.valor / 100)
+  if (c.tipo === "fixed")   return Math.min(c.valor, total.value)
+  return 0
+})
+
+const totalComDesconto = computed(() => Math.max(0, total.value - valorDesconto.value))
+
+// ── FRETE ──
+const freteCep     = ref("")
+const freteLoading = ref(false)
+const freteOptions = ref([])
+const freteSelected = ref(null)
+const freteErro    = ref(false)
+
+const formatFreteCEP = (e) => {
+  let v = e.target.value.replace(/\D/g, "")
+  if (v.length > 5) v = v.replace(/(\d{5})(\d)/, "$1-$2")
+  freteCep.value = v
+}
+
+const calcularFrete = async () => {
+  freteErro.value = false
+  freteOptions.value = []
+  freteSelected.value = null
+  const cep = freteCep.value.replace(/\D/g, "")
+  if (cep.length !== 8) return
+  freteLoading.value = true
+  try {
+    const res  = await fetch(`https://viacep.com.br/ws/${cep}/json/`)
+    const data = await res.json()
+    if (data.erro) { freteErro.value = true; return }
+
+    const gratisPorCupom = cupomAplicado.value?.tipo === "frete"
+
+    freteOptions.value = [
+      {
+        id: "pac",
+        nome: "PAC",
+        prazo: "5 a 8 dias úteis",
+        valor: gratisPorCupom ? 0 : 18.90,
+        gratis: gratisPorCupom || total.value >= 300
+      },
+      {
+        id: "sedex",
+        nome: "SEDEX",
+        prazo: "1 a 3 dias úteis",
+        valor: gratisPorCupom ? 0 : 34.90,
+        gratis: gratisPorCupom
+      },
+    ]
+    freteSelected.value = "pac"
+  } catch {
+    freteErro.value = true
+  } finally {
+    freteLoading.value = false
+  }
+}
+
+const freteValor = computed(() => {
+  if (!freteSelected.value || !freteOptions.value.length) return 0
+  const opt = freteOptions.value.find(o => o.id === freteSelected.value)
+  return opt?.gratis ? 0 : (opt?.valor || 0)
+})
+
+const freteGratis = computed(() => {
+  if (!freteSelected.value || !freteOptions.value.length) return true
+  const opt = freteOptions.value.find(o => o.id === freteSelected.value)
+  return opt?.gratis ?? true
+})
+
+const freteLabel = computed(() => {
+  if (!freteOptions.value.length) return "Grátis"
+  return freteGratis.value ? "Grátis" : formatPrice(freteValor.value)
+})
+
+const totalFinal = computed(() => Math.max(0, totalComDesconto.value + freteValor.value))
+
+// ── PIX ──
 const pixKey = "31973064727"
 
+const pixCode = computed(() =>
+  hasItems.value ? `00020126360014BR.GOV.BCB.PIX0114${pixKey}5204000053039865802BR5913IVY JOIAS6009SAO PAULO62070503***6304${totalFinal.value.toFixed(2)}` : ""
+)
+
+const copyPix = async () => {
+  try {
+    await navigator.clipboard.writeText(pixCode.value)
+    pixCopiado.value = true
+    setTimeout(() => (pixCopiado.value = false), 2500)
+  } catch {
+    alert("Erro ao copiar o código.")
+  }
+}
+
+// ── PAYMENT TABS ──
 const paymentTabs = [
-  { id: "pix",    icon: "⚡", label: "Pix",              badge: "Instantâneo" },
-  { id: "card",   icon: "💳", label: "Cartão de Crédito", badge: null },
-  { id: "boleto", icon: "📄", label: "Boleto Bancário",   badge: null },
+  {
+    id: "pix",
+    label: "Pix",
+    badge: "Instantâneo",
+    svg: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none">
+      <path d="M11.5 2C6.25 2 2 6.25 2 11.5S6.25 21 11.5 21 21 16.75 21 11.5 16.75 2 11.5 2z" fill="#32BCAD" opacity=".15"/>
+      <path d="M8.5 8.5l3 3-3 3M15.5 8.5l-3 3 3 3" stroke="#32BCAD" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`
+  },
+  {
+    id: "card",
+    label: "Cartão de Crédito",
+    badge: null,
+    svg: `<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="2" y="5" width="20" height="14" rx="2"/>
+      <path d="M2 10h20"/>
+      <path d="M6 15h2M10 15h4" stroke-width="1.8"/>
+    </svg>`
+  },
+  {
+    id: "boleto",
+    label: "Boleto Bancário",
+    badge: null,
+    svg: `<svg viewBox="0 0 24 22" width="24" height="22" fill="currentColor">
+      <rect x="1"  y="2" width="2"  height="18" rx="0.5"/>
+      <rect x="4"  y="2" width="1"  height="18" rx="0.5"/>
+      <rect x="6.5"y="2" width="3"  height="18" rx="0.5"/>
+      <rect x="11" y="2" width="1"  height="18" rx="0.5"/>
+      <rect x="13" y="2" width="2"  height="18" rx="0.5"/>
+      <rect x="16" y="2" width="1"  height="18" rx="0.5"/>
+      <rect x="18" y="2" width="3"  height="18" rx="0.5"/>
+      <rect x="22" y="2" width="1"  height="18" rx="0.5"/>
+    </svg>`
+  },
 ]
 
 const paymentLabel = computed(() => {
@@ -407,7 +691,7 @@ const paymentLabel = computed(() => {
   return map[payment.value] || payment.value
 })
 
-const successSnapshot = reactive({ count: 0, total: 0 })
+const successSnapshot = reactive({ count: 0, total: 0, desconto: 0 })
 
 const formatPrice = (value) =>
   Number(value || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
@@ -444,24 +728,11 @@ const searchCep = async () => {
   } catch (e) { console.log(e) }
 }
 
-const pixCode = computed(() =>
-  hasItems.value ? `00020126360014BR.GOV.BCB.PIX0114${pixKey}5204000053039865802BR5913IVY JOIAS6009SAO PAULO62070503***6304${total.value.toFixed(2)}` : ""
-)
-
-const copyPix = async () => {
-  try {
-    await navigator.clipboard.writeText(pixCode.value)
-    pixCopiado.value = true
-    setTimeout(() => (pixCopiado.value = false), 2500)
-  } catch {
-    alert("Erro ao copiar o código.")
-  }
-}
-
 const finish = () => {
   loading.value = true
-  successSnapshot.count = cart.items.length
-  successSnapshot.total = total.value
+  successSnapshot.count   = cart.items.length
+  successSnapshot.total   = totalFinal.value
+  successSnapshot.desconto = valorDesconto.value
   setTimeout(() => {
     loading.value = false
     success.value = true
@@ -489,6 +760,7 @@ const finish = () => {
   --text-muted:  #8a8173;
   --text-light:  #b5ad9f;
   --green:       #2a7a4b;
+  --red:         #c0392b;
   --font-display:'Cormorant Garamond', serif;
   --font-body:   'Jost', sans-serif;
   --ease:        cubic-bezier(0.19, 1, 0.22, 1);
@@ -668,6 +940,7 @@ const finish = () => {
   font-size: .88rem;
   color: var(--dark);
   transition: border-color .3s;
+  box-sizing: border-box;
 }
 
 .field input:focus { border-color: transparent; }
@@ -704,6 +977,161 @@ const finish = () => {
   transform: scaleX(0);
   transform-origin: left;
   transition: transform .35s var(--ease);
+}
+
+/* ── FRETE ── */
+.frete-section {
+  margin-top: 32px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
+}
+
+.frete-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .72rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.frete-input-row {
+  display: flex;
+  gap: 10px;
+}
+
+.frete-input-wrap { flex: 1; }
+
+.frete-input {
+  width: 100%;
+  border: 1.5px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-family: var(--font-body);
+  font-size: .85rem;
+  color: var(--dark);
+  background: var(--cream);
+  outline: none;
+  transition: border-color .3s;
+  box-sizing: border-box;
+  letter-spacing: 1px;
+}
+
+.frete-input:focus { border-color: var(--gold); }
+.frete-input:disabled { opacity: .5; cursor: not-allowed; }
+
+.btn-calcular-frete {
+  padding: 12px 20px;
+  background: var(--dark);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: .7rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 90px;
+  white-space: nowrap;
+}
+
+.btn-calcular-frete:hover:not(:disabled) { background: var(--gold-dark); }
+.btn-calcular-frete:disabled { opacity: .5; cursor: not-allowed; }
+
+.frete-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.frete-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--border-soft);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all .3s var(--ease);
+  background: var(--cream);
+}
+
+.frete-option:hover { border-color: var(--gold); }
+
+.frete-option.selected {
+  border-color: var(--dark);
+  background: var(--white);
+  box-shadow: 0 4px 16px rgba(0,0,0,.05);
+}
+
+.frete-radio {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.frete-option.selected .frete-radio { color: var(--dark); }
+
+.frete-radio-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--dark);
+  opacity: 0;
+  transition: opacity .2s;
+}
+
+.frete-option.selected .frete-radio-dot { opacity: 1; }
+
+.frete-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.frete-nome {
+  font-size: .82rem;
+  font-weight: 600;
+  color: var(--dark);
+}
+
+.frete-prazo {
+  font-size: .7rem;
+  color: var(--text-muted);
+}
+
+.frete-price {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--dark);
+  white-space: nowrap;
+}
+
+.frete-price.gratis { color: var(--green); }
+
+.frete-erro {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .72rem;
+  color: var(--red);
+  margin-top: 10px;
 }
 
 /* installments select */
@@ -792,7 +1220,14 @@ const finish = () => {
 
 .payment-tab.active .tab-radio-dot { opacity: 1; }
 
-.tab-icon  { font-size: 1.1rem; }
+.tab-icon-svg {
+  width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .tab-label { flex: 1; font-weight: 500; }
 
 .tab-badge {
@@ -1202,6 +1637,128 @@ code {
   flex-shrink: 0;
 }
 
+/* ── CUPOM ── */
+.cupom-section {
+  margin-bottom: 24px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cupom-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: .62rem;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.cupom-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.cupom-input {
+  flex: 1;
+  border: 1.5px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 11px 14px;
+  font-family: var(--font-body);
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--dark);
+  background: var(--cream);
+  outline: none;
+  letter-spacing: 2px;
+  transition: border-color .3s;
+  box-sizing: border-box;
+}
+
+.cupom-input:focus { border-color: var(--gold); }
+.cupom-input:disabled { opacity: .5; }
+.cupom-input::placeholder { font-weight: 400; letter-spacing: 1px; color: var(--text-light); }
+
+.btn-cupom {
+  padding: 11px 16px;
+  background: var(--dark);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-family: var(--font-body);
+  font-size: .65rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background .3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+}
+
+.btn-cupom:hover:not(:disabled) { background: var(--gold-dark); }
+.btn-cupom:disabled { opacity: .45; cursor: not-allowed; }
+
+.cupom-erro {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .7rem;
+  color: var(--red);
+  margin-top: 8px;
+}
+
+.cupom-aplicado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: #f0faf4;
+  border: 1.5px solid rgba(42,122,75,.25);
+  border-radius: 8px;
+  padding: 11px 14px;
+}
+
+.cupom-aplicado-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--green);
+}
+
+.cupom-code {
+  display: block;
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--green);
+}
+
+.cupom-desc {
+  display: block;
+  font-size: .68rem;
+  color: rgba(42,122,75,.75);
+  margin-top: 1px;
+}
+
+.btn-remover-cupom {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: rgba(42,122,75,.6);
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  transition: color .2s;
+  flex-shrink: 0;
+}
+
+.btn-remover-cupom:hover { color: var(--red); }
+
 /* ── TOTALS ── */
 .totals { margin-bottom: 28px; }
 
@@ -1226,10 +1783,10 @@ code {
   border-top: 1.5px solid var(--border);
 }
 
-.free-tag {
-  color: var(--green);
-  font-weight: 600;
-}
+.free-tag { color: var(--green); font-weight: 600; }
+
+.desconto-row { color: var(--green); }
+.desconto-val { color: var(--green); font-weight: 600; }
 
 .parcel-info {
   font-size: .72rem;
@@ -1275,6 +1832,16 @@ code {
   border-top-color: white;
   border-radius: 50%;
   animation: spin .7s linear infinite;
+}
+
+.loader-sm {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  display: inline-block;
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -1423,6 +1990,9 @@ code {
 
 .hint-pop-enter-active, .hint-pop-leave-active { transition: all .3s var(--ease); }
 .hint-pop-enter-from, .hint-pop-leave-to { opacity: 0; transform: translateY(-6px); }
+
+.frete-results-enter-active, .frete-results-leave-active { transition: all .35s var(--ease); }
+.frete-results-enter-from, .frete-results-leave-to { opacity: 0; transform: translateY(-8px); }
 
 .modal-in-enter-active { transition: opacity .35s ease; }
 .modal-in-enter-active .success-box { animation: boxIn .45s var(--ease) both; }

@@ -49,4 +49,8 @@ const RelogioSchema: Schema = new Schema(
   }
 );
 
-export default mongoose.model<IRelogio>("Relogio", RelogioSchema);
+export default mongoose.model<IRelogio>(
+  "Relogio",
+  RelogioSchema,
+  "relogios"
+);

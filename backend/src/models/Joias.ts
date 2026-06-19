@@ -48,4 +48,8 @@ const JoiaSchema: Schema = new Schema(
   }
 );
 
-export default mongoose.model<IJoia>("Joia", JoiaSchema);
+export default mongoose.model<IJoia>(
+  "Joia",
+  JoiaSchema,
+  "joias"
+);

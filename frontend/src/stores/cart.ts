@@ -24,9 +24,14 @@ watch(() => cart.items, items => {
 
 const authHeader = () => {
   const token = localStorage.getItem('token')
-  return token ? { Authorization: `Bearer ${token}` } : null
+  
+  // Evita enviar strings corrompidas para a API
+  if (!token || token === 'undefined' || token === 'null') {
+    return null
+  }
+  
+  return { Authorization: `Bearer ${token}` }
 }
-
 const mapItems = (items: any[]): CartItem[] =>
   items.map(i => ({
     _id:      String(i._id ?? ''),
@@ -96,14 +101,16 @@ export const addToCartDirect = async (item: {
   }
 }
 
-export const addToCart = async (product: {
-  _id: string; name: string; price: number; image: string
-}) => addToCartDirect({
-  productId: product._id,
-  name:      product.name,
-  price:     product.price,
-  image:     product.image
-})
+export const addToCart = async (product: any) => {
+  console.log('[addToCart] Produto recebido:', product)
+
+  return addToCartDirect({
+    productId: String(product._id || product.id),
+    name: product.name,
+    price: product.price,
+    image: product.image
+  })
+}
 
 export const removeFromCart = async (id: string) => {
   const headers = authHeader()

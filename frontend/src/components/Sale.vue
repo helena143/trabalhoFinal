@@ -429,17 +429,18 @@ const resetZoom = () => {
 const categories = ['Anéis','Brincos','Pulseiras','Colares','Pingentes','Aliança','Perfume','Relógios']
 
 const toggleCategory = (cat) => {
-  if (selectedCategories.value.includes(cat))
-    selectedCategories.value = selectedCategories.value.filter(c => c !== cat)
-  else selectedCategories.value.push(cat)
+  selectedCategories.value =
+    selectedCategories.value.includes(cat)
+      ? []
+      : [cat]
 }
 
 const toggleMaterial = (mat) => {
-  if (selectedMaterials.value.includes(mat))
-    selectedMaterials.value = selectedMaterials.value.filter(m => m !== mat)
-  else selectedMaterials.value.push(mat)
+  selectedMaterials.value =
+    selectedMaterials.value.includes(mat)
+      ? []
+      : [mat]
 }
-
 const clearFilters = () => {
   selectedCategories.value = []
   selectedMaterials.value  = []
@@ -492,20 +493,20 @@ const computedDiscount = (p) => {
 
 // ── PRODUTOS ──
 const products = ref([
-  { id: 1,  name: 'Colar Riviera',      category: 'Colares',   price: 850,  oldPrice: 1200, image: 'http://localhost:3000/public/products/chome.png',    material: 'Prata 925 com Banho de Ródio',             desc: 'O Colar Riviera é um ícone de sofisticação.' },
-  { id: 2,  name: 'Colar Ponto de luz', category: 'Colares',   price: 700,  oldPrice: 980,  image: 'http://localhost:3000/public/products/colar4.png',    material: 'Colar em Prata 925',  desc: 'A malha Veneziana é famosa por sua resistência.' },
-  { id: 3,  name: 'Relógio Luxo Black', category: 'Relógios',  price: 130,  oldPrice: 200,  image: 'http://localhost:3000/public/products/relogio6.png',  material: 'Pérola de Água Doce Selecionada',          desc: 'Nada supera o charme das pérolas.' },
-  { id: 5,  name: 'Colar Rubi',         category: 'Colares',   price: 3000, oldPrice: 3400, image: 'http://localhost:3000/public/products/rubi.png',      material: 'Prata de Lei 925 Polida',                  desc: 'Inspirado nas grandes maisons.' },
-  { id: 6,  name: 'IVY Bomb Black',          category: 'Perfume',   price: 100,  oldPrice: 189,  image: 'http://localhost:3000/public/products/perfume3.png',  material: 'Eau de Parfum Premium',                    desc: 'Perfume intenso e sofisticado.' },
-  { id: 7,  name: 'Aliança de Ouro',    category: 'Aliança',   price: 2500, oldPrice: 3890, image: 'http://localhost:3000/public/products/alianças.png',  material: 'Ouro Amarelo 18k',                         desc: 'Elegância clássica e acabamento premium.' },
-  { id: 8,  name: 'Pulseira Berloque',  category: 'Pulseiras', price: 580,  oldPrice: 800,  image: 'http://localhost:3000/public/products/berloque.png',  material: 'Prata 925 e Zircônia Cristal',             desc: 'Pulseira luxuosa com brilho intenso.' },
-  { id: 9,  name: 'Cruz Veneziana',   category: 'Colares', price: 120,  oldPrice: 190,  image: 'http://localhost:3000/public/products/cruz.png',      material: 'Prata Maciça 925',                         desc: 'Símbolo clássico com design moderno.' },
-  { id: 14, name: 'Berloque Charm',     category: 'Pingentes', price: 87,   oldPrice: 120,  image: 'http://localhost:3000/public/products/berloque6.png', material: 'Prata 925',                                desc: 'Peça delicada e sofisticada.' },
-  { id: 15, name: 'Aliança Solitário',  category: 'Aliança',   price: 320,  oldPrice: 450,  image: 'http://localhost:3000/public/products/brilho.png',    material: 'Ouro Branco 18k',                          desc: 'Sofisticação e luxo em uma peça única.' },
-  { id: 16, name: 'Anel de Noivado',    category: 'Aliança',   price: 980,  oldPrice: 1400, image: 'http://localhost:3000/public/products/dourada.png',   material: 'Ouro 18k e Diamante',                      desc: 'Anel elegante com acabamento premium.' },
-  { id: 17, name: 'IVY Rose',        category: 'Perfume',   price: 100,  oldPrice: 199,  image: 'http://localhost:3000/public/products/perfume.png',   material: 'Eau de Parfum 50ml',                       desc: 'Notas florais sofisticadas.' },
-  { id: 19, name: 'Relógio Dourado Elegante',   category: 'Relógios',  price: 540,  oldPrice: 700,  image: 'http://localhost:3000/public/products/relogio4.png',  material: 'Aço Inox', desc: 'Relógio sofisticado e elegante.' },
-  { id: 20, name: 'Relógio Star',      category: 'Relógios',  price: 390,  oldPrice: 520,  image: 'http://localhost:3000/public/products/relogio9.png',  material: 'Silicone Premium',                         desc: 'Design esportivo e moderno.' }
+  { id: 1, mongoId: '6a20a97cac6b2f17f3741840',  name: 'Colar Riviera',      category: 'Colares',   price: 850,  oldPrice: 1200, image: 'http://localhost:3000/public/products/chome.png',    material: 'Prata 925 com Banho de Ródio',             desc: 'O Colar Riviera é um ícone de sofisticação.' },
+  { id: 2, mongoId:'6a20a97cac6b2f17f3741841',  name: 'Colar Ponto de luz', category: 'Colares',   price: 700,  oldPrice: 980,  image: 'http://localhost:3000/public/products/colar4.png',    material: 'Colar em Prata 925',  desc: 'A malha Veneziana é famosa por sua resistência.' },
+  { id: 3, mongoId: '6a20a97cac6b2f17f3741842', name: 'Relógio Luxo Black', category: 'Relógios',  price: 130,  oldPrice: 200,  image: 'http://localhost:3000/public/products/relogio6.png',  material: 'Pérola de Água Doce Selecionada',          desc: 'Nada supera o charme das pérolas.' },
+  { id: 5,   mongoId: '6a20a97cac6b2f17f3741843',name: 'Colar Rubi',         category: 'Colares',   price: 3000, oldPrice: 3400, image: 'http://localhost:3000/public/products/rubi.png',      material: 'Prata de Lei 925 Polida',                  desc: 'Inspirado nas grandes maisons.' },
+  { id: 6, mongoId: '6a20a97cac6b2f17f3741844', name: 'IVY Bomb Black',          category: 'Perfume',   price: 100,  oldPrice: 189,  image: 'http://localhost:3000/public/products/perfume3.png',  material: 'Eau de Parfum Premium',                    desc: 'Perfume intenso e sofisticado.' },
+  { id: 7,  mongoId: '6a20a97cac6b2f17f3741845', name: 'Aliança de Ouro',    category: 'Aliança',   price: 2500, oldPrice: 3890, image: 'http://localhost:3000/public/products/alianças.png',  material: 'Ouro Amarelo 18k',                         desc: 'Elegância clássica e acabamento premium.' },
+  { id: 8,  mongoId: '6a20a97cac6b2f17f3741846', name: 'Pulseira Berloque',  category: 'Pulseiras', price: 580,  oldPrice: 800,  image: 'http://localhost:3000/public/products/berloque.png',  material: 'Prata 925 e Zircônia Cristal',             desc: 'Pulseira luxuosa com brilho intenso.' },
+  { id: 9,     mongoId: '6a20a97cac6b2f17f3741847', name: 'Cruz Veneziana',   category: 'Colares', price: 120,  oldPrice: 190,  image: 'http://localhost:3000/public/products/cruz.png',      material: 'Prata Maciça 925',                         desc: 'Símbolo clássico com design moderno.' },
+  { id: 14,  mongoId: '6a20a97cac6b2f17f3741848', name: 'Berloque Charm',     category: 'Pingentes', price: 87,   oldPrice: 120,  image: 'http://localhost:3000/public/products/berloque6.png', material: 'Prata 925',                                desc: 'Peça delicada e sofisticada.' },
+  { id: 15, mongoId: '6a20a97cac6b2f17f3741849', name: 'Aliança Solitário',  category: 'Aliança',   price: 320,  oldPrice: 450,  image: 'http://localhost:3000/public/products/brilho.png',    material: 'Ouro Branco 18k',                          desc: 'Sofisticação e luxo em uma peça única.' },
+  { id: 16,mongoId: '6a20a97cac6b2f17f3741850', name: 'Anel de Noivado',    category: 'Aliança',   price: 980,  oldPrice: 1400, image: 'http://localhost:3000/public/products/dourada.png',   material: 'Ouro 18k e Diamante',                      desc: 'Anel elegante com acabamento premium.' },
+  { id: 17, mongoId: '6a20a97cac6b2f17f3741851', name: 'IVY Rose',        category: 'Perfume',   price: 100,  oldPrice: 199,  image: 'http://localhost:3000/public/products/perfume.png',   material: 'Eau de Parfum 50ml',                       desc: 'Notas florais sofisticadas.' },
+  { id: 19,   mongoId: '6a20a97cac6b2f17f3741852', name: 'Relógio Dourado Elegante',   category: 'Relógios',  price: 540,  oldPrice: 700,  image: 'http://localhost:3000/public/products/relogio4.png',  material: 'Aço Inox', desc: 'Relógio sofisticado e elegante.' },
+  { id: 20,    mongoId: '6a20a97cac6b2f17f3741853', name: 'Relógio Star',      category: 'Relógios',  price: 390,  oldPrice: 520,  image: 'http://localhost:3000/public/products/relogio9.png',  material: 'Silicone Premium',                         desc: 'Design esportivo e moderno.' }
 ])
 
 // ── COMPUTED ──

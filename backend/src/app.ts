@@ -17,6 +17,7 @@ import saleRoutes from "./routes/sale.routes";
 import mailRoutes from "./routes/mail.routes";
 import supportRoutes from "./routes/support.routes";
 import casamentoRoutes from "./routes/casamento.routes";
+import adminRoutes from './routes/admin.routes';
 
 // NOVO
 import couponRoutes from "./routes/coupon.routes";
@@ -95,7 +96,10 @@ app.use("/api/sales", saleRoutes);
 
 app.use("/mail", mailRoutes);
 
+app.use('/api/admin', adminRoutes)
+
 // NOVO
 app.use("/api", couponRoutes);
+
 
 export default app;

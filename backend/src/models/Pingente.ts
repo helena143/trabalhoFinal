@@ -49,4 +49,8 @@ const PingenteSchema: Schema = new Schema(
   }
 );
 
-export default mongoose.model<IPingente>("Pingente", PingenteSchema);
+export default mongoose.model<IPingente>(
+  "Pingente",
+  PingenteSchema,
+  "pingentes"
+);

@@ -79,12 +79,14 @@
           <h4>NOVIDADES EXCLUSIVAS</h4>
           <p>Receba curadoria especial e ofertas antes de todos</p>
           <form class="newsletter-form" @submit.prevent="subscribe">
-            <input type="email" v-model="email" placeholder="Seu e-mail" required />
-            <button type="submit">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            <input type="email" v-model="email" placeholder="Seu e-mail" required :disabled="loading" />
+            <button type="submit" :disabled="loading">
+              <svg v-if="!loading" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+              <svg v-else viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16" class="spin"><circle cx="12" cy="12" r="10"/><path d="M12 2a10 10 0 0 1 10 10"/></svg>
             </button>
           </form>
           <p v-if="subscribed" class="sub-ok">✓ Obrigada! Você agora faz parte da IVY.</p>
+          <p v-if="subError" class="sub-error">✗ Erro ao cadastrar. Tente novamente.</p>
           <p class="privacy-note">
             Ao cadastrar, você aceita nossa <span @click="openModal('privacidade')" class="priv-link">Política de Privacidade</span>.
           </p>
@@ -316,6 +318,8 @@ export default {
     return {
       email: '',
       subscribed: false,
+      subError: false,
+      loading: false,
       activeModal: null
     }
   },
@@ -325,11 +329,28 @@ export default {
     }
   },
   methods: {
-    subscribe() {
+    // ✅ CORRIGIDO: agora chama o backend de verdade
+    async subscribe() {
       if (!this.email) return
-      this.subscribed = true
-      this.email = ''
-      setTimeout(() => { this.subscribed = false }, 5000)
+      this.loading = true
+      this.subError = false
+      try {
+        const res = await fetch('http://localhost:3000/mail/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: this.email, name: 'Assinante' })
+        })
+        if (!res.ok) throw new Error('Falha no servidor')
+        this.subscribed = true
+        this.email = ''
+        setTimeout(() => { this.subscribed = false }, 5000)
+      } catch (err) {
+        console.error('Erro ao cadastrar newsletter:', err)
+        this.subError = true
+        setTimeout(() => { this.subError = false }, 5000)
+      } finally {
+        this.loading = false
+      }
     },
     openModal(key) {
       this.activeModal = key
@@ -486,6 +507,7 @@ export default {
 }
 
 .newsletter-form input::placeholder { color: rgba(255,255,255,0.3); }
+.newsletter-form input:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .newsletter-form button {
   padding: 0 18px;
@@ -498,9 +520,17 @@ export default {
   transition: background 0.2s;
 }
 .newsletter-form button:hover { background: #c9a423; }
+.newsletter-form button:disabled { opacity: 0.6; cursor: not-allowed; }
 
 .sub-ok {
   color: #86efac !important;
+  font-size: 12px !important;
+  margin-top: 10px !important;
+  margin-bottom: 0 !important;
+}
+
+.sub-error {
+  color: #fca5a5 !important;
   font-size: 12px !important;
   margin-top: 10px !important;
   margin-bottom: 0 !important;
@@ -638,6 +668,13 @@ export default {
   line-height: 1.7;
   color: #555;
 }
+
+/* SPIN ANIMATION */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.spin { animation: spin 0.8s linear infinite; }
 
 /* TRANSITIONS */
 .modal-fade-enter-active, .modal-fade-leave-active { transition: all 0.3s ease; }

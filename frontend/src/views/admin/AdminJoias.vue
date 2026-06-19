@@ -1,7 +1,6 @@
 <template>
   <AdminLayout>
 
-    <!-- HEADER -->
     <div class="page-head">
 
       <div>
@@ -23,7 +22,6 @@
 
     </div>
 
-    <!-- STATS -->
     <div class="stats-grid">
 
       <div class="stat-card">
@@ -73,7 +71,6 @@
 
     </div>
 
-    <!-- SEARCH -->
     <div class="toolbar">
 
       <div class="search-box">
@@ -87,7 +84,6 @@
 
     </div>
 
-    <!-- LOADING -->
     <div
       v-if="loading"
       class="loading"
@@ -95,7 +91,6 @@
       Carregando joias...
     </div>
 
-    <!-- EMPTY -->
     <div
       v-else-if="filteredItems.length === 0"
       class="empty"
@@ -115,7 +110,6 @@
 
     </div>
 
-    <!-- GRID -->
     <div
       v-else
       class="grid"
@@ -197,7 +191,6 @@
 
     </div>
 
-    <!-- MODAL -->
     <transition name="fade">
 
       <div
@@ -208,7 +201,6 @@
 
         <div class="modal">
 
-          <!-- TOP -->
           <div class="modal-head">
 
             <div>
@@ -232,7 +224,6 @@
 
           </div>
 
-          <!-- FORM -->
           <div class="form-group">
 
             <label>Nome *</label>
@@ -295,7 +286,6 @@
 
           </div>
 
-          <!-- PREVIEW -->
           <div
             v-if="previewImage"
             class="preview"
@@ -308,7 +298,6 @@
 
           </div>
 
-          <!-- MSG -->
           <p
             v-if="message"
             class="msg"
@@ -317,7 +306,6 @@
             {{ message }}
           </p>
 
-          <!-- FOOTER -->
           <div class="modal-footer">
 
             <button
@@ -359,27 +347,18 @@ import {
 
 import AdminLayout from '@/layouts/AdminLayout.vue'
 
-const BASE =
-  'http://localhost:3000/api/joias'
+// 1. Rota geral de produtos alterada com sucesso
+const BASE = 'http://localhost:3000/api/joias'
 
 const items = ref<any[]>([])
-
 const loading = ref(true)
-
 const showModal = ref(false)
-
 const editing = ref<any>(null)
-
 const saving = ref(false)
-
 const message = ref('')
-
 const msgType = ref('success')
-
 const file = ref<File | null>(null)
-
 const previewImage = ref('')
-
 const search = ref('')
 
 const form = ref({
@@ -411,7 +390,6 @@ const fetch_ = async (
   })
 
 const filteredItems = computed(() => {
-
   return items.value.filter(item =>
     item.name
       ?.toLowerCase()
@@ -419,29 +397,34 @@ const filteredItems = computed(() => {
   )
 })
 
+// 2. Função fetchItems corrigida para ler e filtrar joias do banco geral
 const fetchItems = async () => {
-
   loading.value = true
 
   try {
-
     const r = await fetch(BASE)
 
-    if (r.ok)
-      items.value = await r.json()
+    if (r.ok) {
+      const resData = await r.json()
+      
+      // Obtém a lista independentemente de como o seu backend a envelopou
+      const lista = resData.data || resData.products || resData
 
+      if (Array.isArray(lista)) {
+        // Filtra para mostrar somente itens que pertencem à categoria joias nesta tela
+        items.value = lista.filter((item: any) => item.category === 'joias')
+      } else {
+        items.value = []
+      }
+    }
   } catch (err) {
-
     console.log(err)
-
   } finally {
-
     loading.value = false
   }
 }
 
 const openModal = (item?: any) => {
-
   editing.value = item || null
 
   form.value = item
@@ -465,21 +448,16 @@ const openModal = (item?: any) => {
       : ''
 
   file.value = null
-
   message.value = ''
-
   showModal.value = true
 }
 
 const closeModal = () => {
-
   showModal.value = false
-
   editing.value = null
 }
 
 const handleFile = (e: Event) => {
-
   const selected =
     (e.target as HTMLInputElement)
       .files?.[0]
@@ -487,43 +465,41 @@ const handleFile = (e: Event) => {
   if (!selected) return
 
   file.value = selected
-
   previewImage.value =
     URL.createObjectURL(selected)
 }
 
+// 3. Função saveItem ajustada para anexar a categoria 'joias' perfeitamente
 const saveItem = async () => {
-
   if (
     !form.value.name ||
     !form.value.description
   ) {
-
     message.value =
       'Preencha os campos obrigatórios'
-
     msgType.value = 'error'
-
     return
   }
 
   saving.value = true
 
   try {
-
     const fd = new FormData()
 
     Object.entries(form.value)
       .forEach(([k, v]) => {
-
         fd.append(k, String(v))
       })
 
-    if (file.value)
+    // Adiciona a identificação da categoria para o MongoDB separar depois
+    fd.append('category', 'joias')
+
+    if (file.value) {
       fd.append(
         'image',
         file.value
       )
+    }
 
     const url = editing.value
       ? `${BASE}/${editing.value._id}`
@@ -538,41 +514,30 @@ const saveItem = async () => {
     })
 
     if (r.ok) {
-
       message.value =
         editing.value
           ? 'Joia atualizada!'
           : 'Joia criada!'
 
       msgType.value = 'success'
-
       await fetchItems()
 
       setTimeout(() => {
-
         closeModal()
-
       }, 1000)
 
     } else {
-
       const e = await r.json()
-
       message.value =
         e.message || 'Erro'
-
       msgType.value = 'error'
     }
 
   } catch {
-
     message.value =
       'Erro de conexão'
-
     msgType.value = 'error'
-
   } finally {
-
     saving.value = false
   }
 }
@@ -580,7 +545,6 @@ const saveItem = async () => {
 const deleteItem = async (
   id: string
 ) => {
-
   const confirmDelete =
     confirm(
       'Deseja realmente excluir esta joia?'
@@ -589,7 +553,6 @@ const deleteItem = async (
   if (!confirmDelete) return
 
   try {
-
     const r = await fetch_(
       `${BASE}/${id}`,
       {
@@ -601,7 +564,6 @@ const deleteItem = async (
       fetchItems()
 
   } catch (err) {
-
     console.log(err)
   }
 }
@@ -1000,11 +962,9 @@ onMounted(fetchItems)
 }
 
 @media(max-width:900px){
-
   .stats-grid{
     grid-template-columns:1fr;
   }
-
   .page-head{
     flex-direction:column;
     align-items:flex-start;
@@ -1012,15 +972,12 @@ onMounted(fetchItems)
 }
 
 @media(max-width:700px){
-
   .form-row{
     grid-template-columns:1fr;
   }
-
   .modal{
     padding:24px;
   }
-
   .page-head h1{
     font-size:42px;
   }

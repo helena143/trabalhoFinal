@@ -48,5 +48,8 @@ const PerfumeSchema: Schema = new Schema(
     timestamps: true,
   }
 );
-
-export default mongoose.model<IPerfume>("Perfume", PerfumeSchema);
+export default mongoose.model<IPerfume>(
+  "Perfume",
+  PerfumeSchema,
+  "perfumes"
+);

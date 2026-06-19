@@ -110,7 +110,7 @@
       <div class="countdown-bg" :style="{ backgroundImage: `url(${bannerCountdown})` }"></div>
       <div class="countdown-overlay"></div>
       <div class="countdown-inner">
-        <span class="limited-badge" data-reveal>⚡ EDIÇÃO LIMITADA</span>
+        <span class="limited-badge" data-reveal> EDIÇÃO LIMITADA</span>
         <h2 data-reveal>Dia dos Namorados IVY</h2>
         <p data-reveal>Garanta o presente perfeito com design exclusivo e caixa de veludo premium antes do término do cronômetro.</p>
         <div class="countdown-timer" data-reveal>
@@ -176,7 +176,7 @@
                 </svg>
               </button>
             </div>
-            <p class="card-frete">🚚 Frete grátis</p>
+            <p class="card-frete"> Frete grátis</p>
           </div>
         </div>
       </div>

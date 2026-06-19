@@ -13,7 +13,13 @@ const MONGO_URI =
 
 mongoose
   .connect(MONGO_URI)
-  .then(() => console.log("MongoDB conectado 💎"))
+  .then(() => {
+    console.log("MongoDB conectado 💎");
+    console.log(
+      "Banco:",
+      mongoose.connection.db?.databaseName
+    );
+  })
   .catch((err) => {
     console.error("Erro ao conectar no MongoDB:", err);
     process.exit(1);

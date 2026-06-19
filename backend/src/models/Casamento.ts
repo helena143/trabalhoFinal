@@ -49,5 +49,6 @@ const CasamentoSchema: Schema = new Schema(
 
 export default mongoose.model<ICasamento>(
   "Casamento",
-  CasamentoSchema
+  CasamentoSchema,
+  "casamento"
 );
